@@ -13,12 +13,18 @@ It's plain text and Apache-2.0 licensed, so there's nothing to take on trust: ev
 instruction the agent follows and every line the Python tools run is readable right
 here.
 
+## What you can build
+
+Calculators and quoting tools, ROI and pricing models, dashboards, multi-step forms and
+wizards, inspection and field-report apps with PDF output, internal tools backed by a
+database. If you can model it in a spreadsheet, you can ship it as an app.
+
 ## Use it with any AI
 
-The [Agent Skills format](https://agentskills.io) is supported by Claude Code,
-Claude.ai, OpenAI Codex, Gemini CLI, GitHub Copilot, Cursor, and many others. Because
-it is just Markdown plus scripts, you can also use it with any other AI by pointing it
-at `SKILL.md`.
+It's an open Agent Skill, so it works the same in Claude Code, OpenAI Codex, Cursor,
+Gemini CLI, GitHub Copilot, and the other skills-compatible agents. Add it once and build
+Molnify apps from whichever one you already use. Any other AI works too: just point it at
+`SKILL.md`.
 
 ### Discover & install from molnify.com
 

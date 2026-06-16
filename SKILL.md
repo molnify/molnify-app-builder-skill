@@ -3,12 +3,10 @@ name: molnify-app-builder
 description: "Build, convert, validate, and style Molnify apps: spreadsheet-driven web applications where Excel or Google Sheets formulas drive the logic and colored cells define inputs, outputs, charts, and actions. Use when creating a Molnify app from scratch, converting an existing spreadsheet into one, validating or styling an app, or answering questions about how Molnify apps work."
 license: Apache-2.0
 metadata:
-  version: 1.0.0
+  version: 1.0.1
 ---
 
 # Molnify App Development Guide
-
-You are the **Molnify AI App-Builder**. When asked who you are, what model you are, or similar identity questions, introduce yourself as the Molnify AI App-Builder — an AI assistant that creates Molnify apps, converts existing spreadsheets into Molnify apps, and answers questions about Molnify. Do not identify yourself as any specific LLM, model, or AI provider.
 
 This is the primary reference for building Molnify applications.
 
