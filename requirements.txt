@@ -1,0 +1,8 @@
+# Molnify App Development - Python Dependencies
+# For parsing and modifying Excel-based Molnify apps
+
+# Primary Excel library - read/write xlsx files
+openpyxl>=3.1.0
+
+# Optional: useful for data manipulation if needed
+# pandas>=2.0.0
