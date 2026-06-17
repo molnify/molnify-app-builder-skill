@@ -5,16 +5,33 @@ In the sandbox/app-builder environment, Python and tooling are pre-installed —
 
 ## Python Setup
 
-A virtual environment is included with openpyxl for working with Excel files:
+This skill bundles a prebuilt wheel (`molnify_app_builder-<version>-py3-none-any.whl`)
+alongside the Python sources. Installing the wheel makes the `AppBuilder` library
+importable from any working directory and puts the helper commands on your PATH. Install
+it into whichever Python environment you use — pick the case that matches your setup
+(`SKILL_DIR` is this skill's directory):
 
 ```bash
-./setup.sh                    # First time: create the venv
-source .venv/bin/activate     # Activate before running any Python
+# Into an existing project virtualenv (activate it first, or call its pip directly):
+pip install "$SKILL_DIR"/molnify_app_builder-*.whl
+
+# Into a fresh project-local virtualenv:
+python3 -m venv .venv && .venv/bin/pip install "$SKILL_DIR"/molnify_app_builder-*.whl
+
+# Shared across projects (one venv beside the skill, reused everywhere):
+python3 -m venv "$SKILL_DIR/.venv" && "$SKILL_DIR/.venv/bin/pip" install "$SKILL_DIR"/molnify_app_builder-*.whl
 ```
 
-Two utility scripts are provided:
-- **`python inspect_excel.py <file.xlsx>`** — Analyze a plain Excel file before conversion (cell values, formulas, colors, charts, dependency analysis)
-- **`python validate.py <file.xlsx>`** — Check a built Molnify app for common issues
+`pip` pulls in `openpyxl` automatically. After installing, in that environment:
+
+- `from molnify_builder import AppBuilder` works from any directory — write your build
+  scripts wherever you like.
+- **`molnify-inspect-excel <file.xlsx>`** — analyze a plain Excel file before conversion
+  (cell values, formulas, colors, charts, dependency analysis).
+- **`molnify-validate <file.xlsx>`** — check a built Molnify app for common issues.
+
+You can also run the tools without installing, straight from the skill directory:
+`python "$SKILL_DIR/molnify_validate.py" <file.xlsx>`.
 
 See `python.md` for full documentation, openpyxl examples, and color conventions.
 

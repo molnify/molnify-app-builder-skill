@@ -8,20 +8,21 @@ team can verify it's safe before allowing its use.
 
 | Tool | What it does | Network | Filesystem |
 |------|--------------|---------|------------|
-| `inspect_excel.py` | Reads a `.xlsx` and prints cell values, formulas, colors, charts, and dependency analysis | None | Reads the file you pass it |
-| `validate.py` | Reads a built Molnify app `.xlsx` and reports common issues | None | Reads the file you pass it |
+| `molnify_inspect_excel.py` | Reads a `.xlsx` and prints cell values, formulas, colors, charts, and dependency analysis | None | Reads the file you pass it |
+| `molnify_validate.py` | Reads a built Molnify app `.xlsx` and reports common issues | None | Reads the file you pass it |
 | `molnify_builder.py` | Library for constructing a Molnify `.xlsx` programmatically | None | Writes the `.xlsx` you ask it to build |
-| `setup.sh` | Creates a local Python virtualenv and installs `requirements.txt` (`openpyxl`) via pip | pip downloads `openpyxl` | Creates a `.venv/` directory |
+| `molnify_app_builder-*.whl` | The above tools packaged for `pip install`. Installing it pulls `openpyxl` from PyPI | `pip` downloads `openpyxl` | Installs into the Python environment you choose |
 
 The tools:
 
-- **Make no network calls** (other than `setup.sh` invoking `pip` to install `openpyxl`,
-  which you can skip if `openpyxl` is already available).
+- **Make no network calls** (other than `pip install` of the bundled wheel fetching
+  `openpyxl`, which you can skip if `openpyxl` is already available — e.g. by installing
+  with `--no-deps`).
 - **Send no telemetry** and collect no usage data.
 - **Access no credentials, environment secrets, or files** beyond the spreadsheet paths
   you explicitly pass on the command line.
 - **Are read-only** except `molnify_builder.py`, which writes the `.xlsx` you ask it to
-  produce, and `setup.sh`, which creates a local `.venv/`.
+  produce.
 
 The Markdown guides are documentation only. They contain instructions for an AI agent
 and do not execute anything by themselves.

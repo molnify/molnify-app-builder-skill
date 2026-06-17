@@ -10,15 +10,10 @@ A Python virtual environment is included for programmatically working with Molni
 
 ## Setup
 
-Run the setup script to create the virtual environment:
-```bash
-./setup.sh
-```
-
-Then activate it:
-```bash
-source .venv/bin/activate
-```
+This skill ships a prebuilt wheel alongside the Python sources. Install the wheel into a
+Python environment to make `AppBuilder` importable from any working directory and to put
+the `molnify-validate` and `molnify-inspect-excel` commands on your PATH. See
+`local-instructions.md` for the install recipes (`pip` pulls in `openpyxl` automatically).
 
 ## Installed Libraries
 - **openpyxl** - Read/write Excel xlsx files, supports formulas, charts, and styling
@@ -27,8 +22,8 @@ source .venv/bin/activate
 
 Two ready-made scripts are provided for converting Excel files into Molnify apps:
 
-- **`inspect_excel.py <file.xlsx>`** - Analyzes a plain Excel file before conversion. Outputs cell values, formulas, colors, conditional formatting, charts, named ranges, data validations, and a formula dependency analysis that identifies potential inputs and outputs.
-- **`validate.py <converted_file.xlsx>`** - Checks a converted Molnify app for common issues: missing metadata, incorrect colors, missing `molnifyIgnore`, input formulas referencing other inputs, chart structure problems. Returns exit code 0 if no errors, 1 otherwise.
+- **`molnify_inspect_excel.py <file.xlsx>`** (installed command: `molnify-inspect-excel`) - Analyzes a plain Excel file before conversion. Outputs cell values, formulas, colors, conditional formatting, charts, named ranges, data validations, and a formula dependency analysis that identifies potential inputs and outputs.
+- **`molnify_validate.py <converted_file.xlsx>`** (installed command: `molnify-validate`) - Checks a converted Molnify app for common issues: missing metadata, incorrect colors, missing `molnifyIgnore`, input formulas referencing other inputs, chart structure problems. Returns exit code 0 if no errors, 1 otherwise.
 
 ## Cell Color Conventions
 

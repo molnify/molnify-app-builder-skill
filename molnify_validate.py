@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Validate a converted Molnify Excel app for common issues.
 
-Usage: python validate.py <converted_file.xlsx>
+Usage: python molnify_validate.py <converted_file.xlsx>
 
 Checks for:
 - Metadata on first sheet with ID set
@@ -1297,9 +1297,13 @@ def validate_workbook(filepath):
     return len(errors) == 0
 
 
-if __name__ == '__main__':
+def main():
     if len(sys.argv) != 2:
         print(f"Usage: python {sys.argv[0]} <converted_file.xlsx>")
-        sys.exit(1)
+        return 1
     ok = validate_workbook(sys.argv[1])
-    sys.exit(0 if ok else 1)
+    return 0 if ok else 1
+
+
+if __name__ == '__main__':
+    sys.exit(main())

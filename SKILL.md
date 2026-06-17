@@ -3,7 +3,7 @@ name: molnify-app-builder
 description: "Build, convert, validate, and style Molnify apps: spreadsheet-driven web applications where Excel or Google Sheets formulas drive the logic and colored cells define inputs, outputs, charts, and actions. Use when creating a Molnify app from scratch, converting an existing spreadsheet into one, validating or styling an app, or answering questions about how Molnify apps work."
 license: Apache-2.0
 metadata:
-  version: 1.0.1
+  version: 1.0.2
 ---
 
 # Molnify App Development Guide
@@ -90,7 +90,7 @@ Most common patterns at a glance:
 
 12. **Design with intent, not with effects** - Every app should look like it was designed for its purpose, not generated from a template. Pick a color palette that fits the domain. Choose fonts with character. Avoid generic AI-generated aesthetics: purple gradients on white, uniform rounded corners and card shadows on every element, pulsing animations, gradient text, emoji placeholders, and staggered fade-up animations. Left-aligned content is easier to scan than centered. Vary visual weight instead of making everything look the same. If it looks like every other AI-generated dashboard, it needs a point of view.
 
-13. **Validate the *assembled* string when building formulas in code** - Concatenating formula text in Python (especially adjacent f-strings) easily produces a stray `""` that Excel reads as an *escaped quote*, swallowing every following `&` operator and string into one literal. A corrupted formula doesn't just fail its own cell: on load Excel runs "file level validation and repair" and **strips the entire formula table for that sheet** rather than dropping the one bad formula — so the app can render with every formula gone. Adjacent pieces like `f'="<div>…"'` + `f'"&"<h2>…"'` concatenate to `="<div>…""&"<h2>…"`, where the `""` is misread. After building a formula programmatically, `print`/`assert` the final string and confirm the double-quotes are balanced and every `"&"` is a real operator, not buried inside a literal. `validate.py` flags formulas with an odd number of double-quotes, which catches the common form of this bug.
+13. **Validate the *assembled* string when building formulas in code** - Concatenating formula text in Python (especially adjacent f-strings) easily produces a stray `""` that Excel reads as an *escaped quote*, swallowing every following `&` operator and string into one literal. A corrupted formula doesn't just fail its own cell: on load Excel runs "file level validation and repair" and **strips the entire formula table for that sheet** rather than dropping the one bad formula — so the app can render with every formula gone. Adjacent pieces like `f'="<div>…"'` + `f'"&"<h2>…"'` concatenate to `="<div>…""&"<h2>…"`, where the `""` is misread. After building a formula programmatically, `print`/`assert` the final string and confirm the double-quotes are balanced and every `"&"` is a real operator, not buried inside a literal. `molnify_validate.py` flags formulas with an odd number of double-quotes, which catches the common form of this bug.
 
 ### CSS & DOM Quick Reference
 

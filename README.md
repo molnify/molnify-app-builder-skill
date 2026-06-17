@@ -95,10 +95,10 @@ and how to report a concern.
 | `patterns.md`, `design.md`, `styling.md`, `styling-examples.md` | UX, design, and CSS |
 | `database.md`, `custom-frontend.md`, `report-templates.md`, `advanced-topics.md`, `python.md` | Deeper topics |
 | `examples/` | Worked example apps |
-| `inspect_excel.py` | Analyze a plain `.xlsx` before conversion |
-| `validate.py` | Check a built Molnify app for common issues |
+| `molnify_inspect_excel.py` | Analyze a plain `.xlsx` before conversion |
+| `molnify_validate.py` | Check a built Molnify app for common issues |
 | `molnify_builder.py` | Programmatic app construction (`AppBuilder`) |
-| `setup.sh`, `requirements.txt` | Optional Python virtualenv for the tools |
+| `molnify_app_builder-*.whl`, `pyproject.toml` | Install the tools into a Python environment (`pip install …whl`) |
 
 ## License
 

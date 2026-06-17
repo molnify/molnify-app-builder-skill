@@ -9,7 +9,7 @@ If you have an existing Excel workbook with formulas and data but no Molnify col
 Before touching anything, understand the workbook. Run the **inspect script** to get a structured analysis:
 
 ```bash
-inspect_excel.py <file.xlsx>
+molnify_inspect_excel.py <file.xlsx>
 ```
 
 This outputs all cell values, formulas, colors, conditional formatting, charts, named ranges, data validations, and a formula dependency analysis that identifies potential inputs and outputs. Use its output to guide the steps below.
@@ -24,7 +24,7 @@ This outputs all cell values, formulas, colors, conditional formatting, charts, 
 5. **Check formulas for compatibility** - Modern Excel (365/2021) saves newer functions with internal `_xlfn.` or `_xludf.` prefixes (e.g., `_xlfn.IFS`, `_xlfn.XLOOKUP`). openpyxl preserves these prefixes in formula strings, and Molnify's calculation engine cannot parse them. You must address these before uploading:
    - **Strip the prefix** for supported functions: `IFS`, `SWITCH`, `TEXTJOIN`, `CONCAT`, `MAXIFS`, `MINIFS`, `AVERAGEIFS`, `CEILING.MATH`, `FLOOR.MATH`, `IFNA`, `NUMBERVALUE`, `DAYS`. Simply remove the `_xlfn.` part (e.g., `_xlfn.IFS(...)` → `IFS(...)`).
    - **Rewrite** unsupported functions: `XLOOKUP` → `INDEX`/`MATCH`, `FILTER` → manual ranges or helper columns, `SORT`/`UNIQUE` → sorted data ranges, `LET`/`LAMBDA` → intermediate cells or restructured formulas.
-   - The `validate.py` script detects `_xlfn.`/`_xludf.` prefixes and reports them as errors.
+   - The `molnify_validate.py` script detects `_xlfn.`/`_xludf.` prefixes and reports them as errors.
 
 ## Step 2: Create a Metadata Sheet
 
@@ -109,7 +109,7 @@ Native Excel charts will **not** carry over. Molnify uses its own charting. Repl
 Run the **validate script** to catch common issues:
 
 ```bash
-validate.py <converted_file.xlsx>
+molnify_validate.py <converted_file.xlsx>
 ```
 
 ### Understanding the output
@@ -138,7 +138,7 @@ This usually means the cell was colored manually or in Google Sheets with a slig
 
 ### Iterative workflow
 
-1. Run `validate.py <file.xlsx>`
+1. Run `molnify_validate.py <file.xlsx>`
 2. Fix all **errors** first
 3. Re-run to confirm errors are resolved
 4. Review **warnings** - fix genuine issues, ignore false positives

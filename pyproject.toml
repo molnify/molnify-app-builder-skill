@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "molnify-app-builder"
+# Stamped from publish/VERSION at publish time; the source value is a placeholder.
+version = "1.0.2"
+description = "Build, convert, and validate Molnify apps (spreadsheet-driven web applications)."
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+dependencies = ["openpyxl>=3.1.0"]
+
+[project.scripts]
+molnify-validate = "molnify_validate:main"
+molnify-inspect-excel = "molnify_inspect_excel:main"
+
+# These tools are flat single-file modules at the project root rather than a
+# package directory, so they can also be run directly (e.g. python molnify_validate.py).
+[tool.setuptools]
+py-modules = ["molnify_builder", "molnify_validate", "molnify_inspect_excel"]

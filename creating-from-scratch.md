@@ -173,7 +173,7 @@ Key points:
 Always validate before uploading:
 
 ```bash
-validate.py my-app.xlsx
+molnify_validate.py my-app.xlsx
 ```
 
 This checks for missing metadata, incorrect colors, layout issues, unsupported functions, and more. Fix all **errors** (the app won't work correctly with errors). **Warnings** are advisory - review but not always actionable.
