@@ -41,10 +41,10 @@ The App sheet is a thin interface layer. Inputs live on App, and the Model sheet
 4  Annual Contribution      [GREEN] 5000                     min=0;decimals=0;prefix=$
 5  Inflation Rate (%)       [GREEN] 2.5                      slider;min=0;max=10;delta=0.5
 6
-7  Final Value              [RED] =Model!B8                  decimals=0;prefix=$;icon=fa-coins
-8  Total Contributions      [RED] =Model!B9                  decimals=0;prefix=$
-9  Total Growth             [RED] =Model!B10                 decimals=0;prefix=$
-10 Real Return (inflation-adjusted) [RED] =Model!B11         decimals=0;prefix=$
+7  Final Value              [RED] ="$"&TEXT(ROUND(Model!B8,0),"#,##0")   icon=fa-money
+8  Total Contributions      [RED] ="$"&TEXT(ROUND(Model!B9,0),"#,##0")
+9  Total Growth             [RED] ="$"&TEXT(ROUND(Model!B10,0),"#,##0")
+10 Real Return (inflation-adjusted) [RED] ="$"&TEXT(ROUND(Model!B11,0),"#,##0")
 11
 12 Growth Over Time         Nominal Value   Real Value       lineChart;yAxis=Value ($);xAxis=Year
 13 Year 1                   [BLUE]=Model!C2   [BLUE]=Model!D2
@@ -64,7 +64,7 @@ The App sheet is a thin interface layer. Inputs live on App, and the Model sheet
 ```
      A                        B                                           C                D
 1  molnifyIgnore
-2  Rate (monthly)            =App!B2/100
+2  Rate (annual)             =App!B2/100
 3  Inflation (annual)        =App!B5/100
 4  Years                     =App!B3
 5  Annual Contribution       =App!B4
@@ -96,11 +96,11 @@ app.add_input("Years", 10, ui="slider;min=1;max=50")
 app.add_input("Annual Contribution", 5000, ui="min=0;decimals=0;prefix=$")
 app.add_input("Inflation Rate (%)", 2.5, ui="slider;min=0;max=10;delta=0.5")
 
-# Outputs
-app.add_output("Final Value", "=Model!B8", ui="decimals=0;prefix=$;icon=fa-coins")
-app.add_output("Total Contributions", "=Model!B9", ui="decimals=0;prefix=$")
-app.add_output("Total Growth", "=Model!B10", ui="decimals=0;prefix=$")
-app.add_output("Real Return (inflation-adjusted)", "=Model!B11", ui="decimals=0;prefix=$")
+# Outputs — bake the unit into the formula text; prefix/postfix are input-only and do nothing here.
+app.add_output("Final Value", '="$"&TEXT(ROUND(Model!B8,0),"#,##0")', ui="icon=fa-money")
+app.add_output("Total Contributions", '="$"&TEXT(ROUND(Model!B9,0),"#,##0")')
+app.add_output("Total Growth", '="$"&TEXT(ROUND(Model!B10,0),"#,##0")')
+app.add_output("Real Return (inflation-adjusted)", '="$"&TEXT(ROUND(Model!B11,0),"#,##0")')
 
 # Chart
 years = 10

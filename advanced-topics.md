@@ -1,6 +1,6 @@
 # Advanced Topics
 
-Companion to the main reference in `CLAUDE.md`. Contains JavaScript runtime details, DOM lifecycle, and tips not covered in the main reference.
+Companion to the main reference. Contains JavaScript runtime details, DOM lifecycle, and tips not covered in the main reference.
 
 ---
 
@@ -241,8 +241,7 @@ JavaScript: function handleAgeChange(el) { var v = getValueForVariable('age'); i
 | Empty string check fails | Empty Molnify cells return `'\u00A0'` (non-breaking space), not `''` | Check `if (val !== '\u00A0')` |
 | `getValueForVariable()` returns `undefined` | No input/output has `variable=X` matching that name | Verify `UI: variable=X` is set, check spelling/case |
 | `performActionWithName()` silently fails | No action has `name: X` (case-sensitive) | Verify the action's `name` property matches exactly |
-| `<script>` in HTML output not running | `innerHTML` doesn't execute scripts | Use `jsOnChange` on the output instead |
-| Infinite calc loop (app freezes) | `JavaScriptAfterCalc` calls `setValueForVariable()` which triggers auto-calc, which runs `JavaScriptAfterCalc` again | Compare before setting: `if (current !== desired) setValueForVariable(...)` |
+| Infinite calc loop (app freezes) | `setValueForVariable()` in `JavaScriptAfterCalc` re-triggers auto-calc | Guard: `if (current !== desired) setValueForVariable(...)` |
 
 ---
 

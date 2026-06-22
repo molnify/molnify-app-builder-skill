@@ -3,7 +3,7 @@ name: molnify-app-builder
 description: "Build, convert, validate, and style Molnify apps: spreadsheet-driven web applications where Excel or Google Sheets formulas drive the logic and colored cells define inputs, outputs, charts, and actions. Use when creating a Molnify app from scratch, converting an existing spreadsheet into one, validating or styling an app, or answering questions about how Molnify apps work."
 license: Apache-2.0
 metadata:
-  version: 1.0.2
+  version: 1.0.4
 ---
 
 # Molnify App Development Guide
@@ -73,7 +73,7 @@ Most common patterns at a glance:
 
 7. **Display numbers at a sensible scale and precision** - Raw formula results are rarely display-ready: they carry excessive decimals (`33.333333333`) *and* often an awkward magnitude. Two separate decisions:
    - **Precision:** Round to what the reader can act on. ~3–4 significant figures is plenty for most displays. Use Excel's `ROUND()` in the formula, or the `decimals=N` UI option (and `axisDecimals=N` for chart axes — long axis tick labels are a common readability killer).
-   - **Magnitude:** If values run in the thousands or millions, scale the unit instead of printing every digit. `124 500 SEK` reads better as `124.5 tSEK`, and `8 300 000 SEK` as `8.3 MSEK`. Divide by 1000/1e6 in the formula (or use the `multiplier` UI option) and state the scaled unit in the title or via `prefix`/`postfix` — e.g. title "Revenue (tSEK)" rather than a 7-digit axis. Keep the chosen unit consistent across related outputs and a chart's whole axis.
+   - **Magnitude:** If values run in the thousands or millions, scale the unit instead of printing every digit. `124 500 SEK` reads better as `124.5 tSEK`, and `8 300 000 SEK` as `8.3 MSEK`. Divide by 1000/1e6 in the formula (or use the `multiplier` UI option) and state the scaled unit in the title — e.g. title "Revenue (tSEK)" rather than a 7-digit axis. Keep the chosen unit consistent across related outputs and a chart's whole axis.
    - **Rule of thumb:** before finalizing, ask "at this scale, is this number easy to read at a glance?" An axis labelled `0, 25000, 50000, 75000` should usually be `0, 25, 50, 75` with a "tSEK" axis title. This applies to scalar outputs, table cells, and chart axes alike.
 
 8. **Verify formulas after adding or removing cells** - When inserting or deleting rows/columns, Excel formulas may shift or break. Always verify that all formulas still reference the correct cells after structural changes. This is especially critical when working programmatically (e.g., with openpyxl) where automatic reference adjustment doesn't occur.
@@ -94,93 +94,22 @@ Most common patterns at a glance:
 
 ### CSS & DOM Quick Reference
 
-The rendered DOM does NOT match the spreadsheet structure. These are the actual selectors:
-
-**Page layout:**
-```
-#content → #boxRow → #leftColumn (inputs) + #rightColumn (outputs/charts)
-#appHeaderRow (Bootstrap .row) → h1#appHeader.page-header (contains p#pAppTitle) + #appMenu
-```
-`#content` ships a default `padding: 20px 25px` — zero it when building a custom grid so it doesn't compound with the grid's own padding.
-
-**Key selectors:**
-| Target | Selector |
-|--------|----------|
-| Input panel | `#inputpanel` |
-| Input wrapper | `.form-group` |
-| Input label | `.control-label` / `.input-label` |
-| Input element | `.form-control` / `.inputElement` |
-| Dropdown input (Select2) | `.select2-selection--single` — the native `<select>` is hidden, see Dropdowns note below |
-| Scalar output card | `.widget-stats` (inside `.outputbox`) |
-| Scalar output title | `h4.boxName` |
-| Scalar output value | `p.outputBoxValue` |
-| Output boxes panel | `#outputboxpanel` |
-| Chart/table/HTML panel | `.panel` (inside `#rightColumn`) |
-| Panel header | `.panel-heading` / `h4.panel-title` |
-| Panel-heading buttons | `.panel-heading-btn .btn` (collapse `btn-warning`, expand `btn-success`, plus download/chart-type) |
-| Chart container | `.chart` (contains `svg.nvd3-svg`) |
-| Table | `table.out-table` (headers use `<td>`, not `<th>`) |
-| HTML output | `.out-html` |
-
-**Chart series colors** (via CSS, `.chart-series0` through `.chart-series39`):
-```css
-.chart-series0 { color: #3498db; }
-.chart-series1 { color: #e74c3c; }
-.chart-series2 { color: #2ecc71; }
-```
-
-**Default backgrounds have white text** — metadata color properties only change the background:
-| Element | Default Background |
-|---------|-------------------|
-| Top banner, panel headers | `#242a30` (dark) |
-| Output boxes | `#00acac` (teal) |
-| Buttons | `#00acac` / `#b6c2c9` |
-
-Light background + white text = invisible. Either use dark backgrounds or override text color via CSS: `.panel-heading { color: #333 !important; }`
-
-The output-box teal comes from a class that uses `!important`, so a plain `.widget-stats { background: … }` override **loses**. Use `!important` (or the `OutputBoxBackgroundColor` metadata).
-
-**Icons are Font Awesome 4.7.0.** FA5/6 names do not render — use the FA4 name: `fa-line-chart` (not `fa-chart-line`), `fa-coffee` (not `fa-mug-hot`), `fa-cubes` (not `fa-box`), `fa-money` (not `fa-coins`). When an icon silently doesn't appear, check it against the FA4 set.
-
-**Dropdown inputs render as Select2 4.0.13, not a plain `<select>`.** The native `<select>` is hidden (`.select2-hidden-accessible`), so styling `.form-control`/`.inputElement` does nothing. Style the widget instead:
-- `.select2-selection--single` — the visible box; `.select2-selection__rendered` — the selected text; `.select2-selection__arrow` — the caret.
-- The **results list is appended to `<body>`**, not inside `#inputpanel`, so `.select2-dropdown` / `.select2-results__option` rules **cannot be scoped** to the app — write them unscoped.
-- Selected/highlighted options are flagged with the **`[aria-selected]` attribute** (Select2 4.0), not a `--selected` class.
-- Molnify's bundled Select2 CSS loads **after** custom CSS and ties on specificity, so a plain `.select2-results__option` rule loses. **Raise specificity** (e.g. append `[aria-selected]`) to win.
-
-**Custom header layout:** `#appHeaderRow` is a Bootstrap `.row`, and both `h1#appHeader` and the nested `p#pAppTitle` carry bottom margins — which top-aligns the title in a custom layout. The info/print/save buttons are `.btn-success` (teal). To restyle: make `#appHeaderRow` a flex container, zero the margins on `#appHeader`/`#pAppTitle`, suppress the `.row` clearfix pseudo-elements (`#appHeaderRow::before/::after { content: none; }`), and restyle the buttons.
-
-When custom CSS seems to have no effect, **inspect the real rendered DOM in the browser console** — Molnify's DOM diverges from the spreadsheet and wraps inputs in third-party widgets (Select2), so the element you're targeting may be hidden or replaced.
-
-For CSS Grid layouts, dashboard recipes, and advanced DOM manipulation, see `styling.md`.
+The rendered DOM does NOT match the spreadsheet — inputs are wrapped in third-party widgets and the selectors differ. `styling.md` has the full DOM tree, selector reference, default color scheme, chart-series colors, the Select2 / Font Awesome / custom-header gotchas, CSS Grid layouts, and dashboard recipes.
 
 ### Companion Guides
 
-This file is the primary reference and covers most tasks. Companion files are for **specific needs** — only read them when the task requires it:
-- **`creating-from-scratch.md`** - AppBuilder usage, row tracking, dropdowns, interleaving
-- **`converting-excel.md`** - Converting a plain Excel file (no color coding) into a Molnify app
-- **`styling.md`** - DOM structure, CSS selectors, CSS Grid escape pattern, Bootstrap overrides. Read when doing **layout restructuring** (moving panels, custom grids, non-standard column arrangements). Not needed for basic color/font changes.
-- **`styling-examples.md`** - Complete layout recipes (dashboards, sidebars, kiosk, dark theme, etc.). Read when you need a **starting point for a specific layout**.
-- **`design.md`** - Visual design principles: typography, color, hierarchy, composition, and avoiding generic AI aesthetics. **Read before choosing fonts, colors, or visual direction** for any app.
-- **`patterns.md`** - Wizards, grouped forms, master-detail, conditional forms. Read when implementing a **specific UX pattern** — these are tested implementations, don't reinvent them.
-- **`database.md`** - Database tables, schema provisioning, autofill, reading and writing data
-- **`report-templates.md`** - Report template engines (HTML, DOCX, XLSX), template syntax
-- **`custom-frontend.md`** - Replace Molnify's default UI entirely (advanced, rarely needed)
-- **`advanced-topics.md`** - DOM lifecycle, JS execution details, setValueForVariable debouncing, troubleshooting
-- **`python.md`** - openpyxl examples, color conventions, working with formulas
-- **`examples/`** - Complete app examples: expense tracker, sales dashboard, financial model
-- **`local-instructions.md`** - Local development setup: Python venv, deploying apps to app.molnify.com
+Alongside this reference, companion guides cover specific needs: `creating-from-scratch.md`, `converting-excel.md`, `styling.md`, `styling-examples.md`, `design.md`, `patterns.md`, `database.md`, `report-templates.md`, `custom-frontend.md`, `advanced-topics.md`, `python.md`, and `examples/`. See `local-instructions.md` for an index of what each covers and when to reach for it, plus local setup and deployment.
 
 ### Choosing Your UI Approach
 
-| What you want | Approach | Read |
-|---------------|----------|------|
-| Colors, fonts, spacing | CSS metadata + quick ref above | This file + `design.md` |
+| What you want | Approach | Guide |
+|---------------|----------|-------|
+| Colors, fonts, spacing | CSS metadata + the CSS & DOM quick ref above | `design.md` |
 | Rearranged layout, dashboard, CSS Grid | CSS + `JavaScriptAfterLoad` | `styling.md` |
 | Wizard, master-detail, conditional sections | Standard Molnify features | `patterns.md` |
 | Fully custom DOM | Headless mode (`Headless: TRUE`) | `custom-frontend.md` |
 
-**Most "modern" or "professional" requests need the second row** — restyle and rearrange the default UI. Custom frontends add significant complexity and should only be used when you need to own the DOM entirely.
+**Many "modern" or "professional" requests are met by the second row** — restyling and rearranging the default UI is usually the quickest path. When a design needs a layout or interaction the default UI can't express, a custom (headless) frontend is a fully supported tool — reach for it whenever it fits the goal.
 
 ---
 
@@ -255,8 +184,8 @@ To create a dropdown: create a named range with the list values, add Data Valida
 | `max=N` | Maximum allowed value | `UI: max=100` |
 | `delta=N` | Increment step for +/- buttons and slider ticks | `UI: delta=0.5` |
 | `multiplier=N` | Display multiplier | `UI: multiplier=100` (shows 0.5 as 50) |
-| `prefix=X` | Display prefix | `UI: prefix=$` |
-| `postfix=X` | Display suffix | `UI: postfix=%` |
+| `prefix=X` | Display prefix (inputs only) | `UI: prefix=$` |
+| `postfix=X` | Display suffix (inputs only) | `UI: postfix=%` |
 | `decimals=N` | Number of decimal places | `UI: decimals=2` |
 | `placeholder=X` | Placeholder text | `UI: placeholder=Enter value...` |
 | `regEx=X` | Regex pattern for validation | `UI: regEx=^[A-Z]{2}[0-9]{4}$` |
@@ -336,19 +265,6 @@ Charts and tables use **blue cells** for data values only.
 - Column headers (series names) - NO color
 - Row labels (category names) - NO color
 - UI configuration cell - NO color
-
-```
-               A              B              C              D
-         +--------------+--------------+--------------+--------------+
-Row 1    | [Title]      | [Col Title]  | [Col Title]  | [UI cell]    |  <- NO color
-         +--------------+--------------+--------------+--------------+
-Row 2    | [Row Label]  | [BLUE VALUE] | [BLUE VALUE] |              |  <- Only B2, C2 are blue
-         +--------------+--------------+--------------+--------------+
-Row 3    | [Row Label]  | [BLUE VALUE] | [BLUE VALUE] |              |  <- Only B3, C3 are blue
-         +--------------+--------------+--------------+--------------+
-Row 4    | [Row Label]  | [BLUE VALUE] | [BLUE VALUE] |              |  <- Only B4, C4 are blue
-         +--------------+--------------+--------------+--------------+
-```
 
 **Example — multi-series (single-series is the same with one data column; pie/donut use one column too):**
 ```
@@ -601,7 +517,7 @@ Insert or update a record in the application's configured record table.
 
 Requires `RecordTableName` metadata (or `recordTableName` action option) to be set to the full table name including the `data_` prefix (e.g., `data_my-app_0`). Maps input/output variables to database columns. If the ID variable has a value, updates that record; otherwise creates a new record. The new/updated record ID is automatically set on the input matching `idVariable`.
 
-**Important:** Only inputs the user has modified ("dirty") are sent to the backend. If a user submits without changing an input, that column is omitted from the INSERT. Set `DEFAULT` values on database columns for any input that has a default value, or make the column nullable. See `database.md` for details.
+**Important:** Only modified ("dirty") inputs are sent. Columns for unmodified inputs need `DEFAULT` values or must be nullable. See `database.md` for details.
 
 **Insert SQL Row (`type: insertrow`)**
 Insert or update a row in a specific database table with explicit column mapping.
@@ -756,7 +672,7 @@ Metadata cells (purple) configure application-wide settings.
 ### Feature Toggles
 | Property | Default | Description |
 |----------|---------|-------------|
-| `AutoCalcEnabled` | TRUE | Auto-calculate on input change. When FALSE, no calculation runs automatically - not on load, not on input change. You must call `calculateButton()` in `JavaScriptAfterLoad` to trigger the initial calculation. **Avoid disabling unless truly required** (e.g., custom frontends that manage calculation themselves). Disabling as a performance optimization is almost always wrong - it breaks the expected UX and introduces subtle bugs. If you're tempted to set this to FALSE, reconsider whether the real problem is elsewhere. |
+| `AutoCalcEnabled` | TRUE | Auto-calculate on input change. When FALSE, no calculation runs automatically - not on load, not on input change; you must trigger calculation yourself (e.g. `calculateButton()` in `JavaScriptAfterLoad` for the initial calc). **Avoid disabling unless truly required** — disabling as a performance optimization breaks the expected UX and introduces subtle bugs. |
 | `EnabledForCalculate` | TRUE | Show calculate button (only visible when AutoCalc is FALSE) |
 | `EnabledForSave` | FALSE | Enable scenario saving (shows save/delete/share buttons) |
 | `EnabledForReset` | FALSE | Show reset button |

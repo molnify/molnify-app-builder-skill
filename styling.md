@@ -1,6 +1,6 @@
 # App Styling Guide
 
-Companion to the main reference in `CLAUDE.md`.
+Companion to the main reference.
 
 ## Constraints
 
@@ -142,6 +142,16 @@ Understanding the DOM structure helps write effective CSS. Here's the layout:
 - `data-jsOnChange="<handler>"` - change callback
 - `data-reset-when-hidden="true"` - reset on conditional hide
 
+## DOM & CSS Gotchas
+
+Common reasons custom CSS silently fails:
+
+- **`#content`** ships a default `padding: 20px 25px` — zero it when building a custom grid so it doesn't compound with the grid's own padding.
+- **Icons are Font Awesome 4.7.0.** FA5/6 names do not render — use the FA4 name: `fa-line-chart` (not `fa-chart-line`), `fa-coffee` (not `fa-mug-hot`), `fa-cubes` (not `fa-box`), `fa-money` (not `fa-coins`). When an icon silently doesn't appear, check it against the FA4 set.
+- **Dropdowns render as Select2 4.0.13**, not a plain `<select>`. The native `<select>` is hidden (`.select2-hidden-accessible`), so styling `.form-control`/`.inputElement` does nothing. Style the widget instead: `.select2-selection--single` (the visible box), `.select2-selection__rendered` (the selected text), `.select2-selection__arrow` (the caret). The **results list is appended to `<body>`**, not inside `#inputpanel`, so `.select2-dropdown` / `.select2-results__option` rules **cannot be scoped** to the app — write them unscoped. Selected options are flagged with the **`[aria-selected]` attribute** (Select2 4.0), not a `--selected` class; Molnify's bundled Select2 CSS loads **after** custom CSS and ties on specificity, so raise specificity (e.g. append `[aria-selected]`) to win.
+- **Custom header layout:** `#appHeaderRow` is a Bootstrap `.row`, and both `h1#appHeader` and the nested `p#pAppTitle` carry bottom margins — which top-aligns the title in a custom layout. The info/print/save buttons are `.btn-success` (teal). To restyle: make `#appHeaderRow` a flex container, zero the margins on `#appHeader`/`#pAppTitle`, suppress the `.row` clearfix pseudo-elements (`#appHeaderRow::before/::after { content: none; }`), and restyle the buttons.
+- When custom CSS seems to have no effect, **inspect the real rendered DOM in the browser console** — Molnify's DOM diverges from the spreadsheet and wraps inputs in third-party widgets (Select2), so the element you're targeting may be hidden or replaced.
+
 ## Targeting Specific Panels
 
 **Panel IDs are unreliable.** `#outputpanel-N` and `#chartpanel-N` IDs are assigned dynamically and their numbering can change when you add/remove outputs. Use the `class=` UI option instead:
@@ -194,6 +204,8 @@ CSS: .panel-heading { color: #333 !important; }
 OutputBoxBackgroundColor: #f8f9fa
 CSS: .bg-green { color: #333 !important; }
 ```
+
+The output-box teal *background* comes from a class that uses `!important`, so a plain `.widget-stats { background: … }` override **loses**. Use `!important` (or the `OutputBoxBackgroundColor` metadata).
 
 ## Styling Best Practices
 

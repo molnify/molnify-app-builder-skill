@@ -30,8 +30,8 @@ A multi-chart dashboard with conditional display, CSS styling, and multiple char
 1  View                 [GREEN] All                 dropdown;variable=viewMode
 2  Year                 [GREEN] 2025                dropdown
 3
-4  Total Revenue        [RED] =Model!B2              decimals=0;prefix=$;icon=fa-dollar-sign
-5  Growth               [RED] =Model!B3              decimals=1;postfix=%
+4  Total Revenue        [RED] ="$"&TEXT(ROUND(Model!B2,0),"#,##0")   icon=fa-usd
+5  Growth               [RED] =TEXT(Model!B3,"0.0")&"%"
 6
 7  Revenue by Region    EMEA         APAC         Americas       barChart;stacked;showValues
 8  Q1                   [BLUE]=Model!C2  [BLUE]=Model!D2  [BLUE]=Model!E2
@@ -87,9 +87,9 @@ app.add_metadata("CSS",
 app.add_input("View", "All", ui="dropdown;variable=viewMode")
 app.add_input("Year", "2025", ui="dropdown")
 
-# Summary outputs
-app.add_output("Total Revenue", "=Model!B2", ui="decimals=0;prefix=$;icon=fa-dollar-sign")
-app.add_output("Growth", "=Model!B3", ui="decimals=1;postfix=%")
+# Summary outputs — units baked into the formula; prefix/postfix are input-only and do nothing here.
+app.add_output("Total Revenue", '="$"&TEXT(ROUND(Model!B2,0),"#,##0")', ui="icon=fa-usd")
+app.add_output("Growth", '=TEXT(Model!B3,"0.0")&"%"')
 
 # Revenue by region chart
 app.add_chart("Revenue by Region", "barChart",
@@ -120,7 +120,7 @@ app.add_chart("Product Mix", "pieChart",
 # Model sheet with sample data
 app.add_model_sheet("Model")
 app.set_cell("Model!A2", "Total Revenue")
-app.set_cell("Model!B2", 2450000)
+app.set_cell("Model!B2", "=SUM(C2:E5)")
 app.set_cell("Model!A3", "Growth")
 app.set_cell("Model!B3", 12.5)
 

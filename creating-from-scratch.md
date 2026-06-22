@@ -1,6 +1,6 @@
 # Creating a Molnify App from Scratch
 
-Companion to the main reference in `CLAUDE.md`.
+Companion to the main reference.
 
 This guide walks through building a new Molnify app without an existing Excel file. For converting an existing spreadsheet, see `converting-excel.md`.
 
@@ -104,9 +104,9 @@ row_email = app.add_input("Recipient Email", "", ui="placeholder=email@company.c
 
 # Outputs — reference inputs by row variable
 R, G, Y = f"App!B{row_rev}", f"App!B{row_growth}", f"App!B{row_years}"
-app.add_output("Year 1 Revenue", f"={R}*(1+{G}/100)", ui="decimals=0;prefix=$")
-app.add_output("Final Year Revenue", f"={R}*(1+{G}/100)^{Y}", ui="decimals=0;prefix=$")
-app.add_output("Total Revenue", f"=IF({G}=0,{R}*{Y},{R}*((1+{G}/100)^{Y}-1)/({G}/100))", ui="decimals=0;prefix=$")
+app.add_output("Year 1 Revenue", f'="$"&TEXT(ROUND({R}*(1+{G}/100),0),"#,##0")')
+app.add_output("Final Year Revenue", f'="$"&TEXT(ROUND({R}*(1+{G}/100)^{Y},0),"#,##0")')
+app.add_output("Total Revenue", f'="$"&TEXT(ROUND(IF({G}=0,{R}*{Y},{R}*((1+{G}/100)^{Y}-1)/({G}/100)),0),"#,##0")')
 
 # Chart
 app.add_chart("Revenue Projection", "lineChart",
@@ -142,9 +142,9 @@ app.add_input("Interest Rate", 0.05, ui="slider;min=0.01;max=0.15;delta=0.005")
 app.add_input("Term (years)", 20, ui="slider;min=1;max=40")
 
 # Outputs - B5, B6, B7 (blank row 4); reference the model sheet
-app.add_output("Monthly Payment", "=Model!B3", ui="decimals=2;prefix=$")
-app.add_output("Total Paid", "=Model!B4", ui="decimals=2;prefix=$")
-app.add_output("Total Interest", "=Model!B5", ui="decimals=2;prefix=$")
+app.add_output("Monthly Payment", '="$"&TEXT(ROUND(Model!B3,2),"#,##0.00")')
+app.add_output("Total Paid", '="$"&TEXT(ROUND(Model!B4,2),"#,##0.00")')
+app.add_output("Total Interest", '="$"&TEXT(ROUND(Model!B5,2),"#,##0.00")')
 
 # Model sheet for intermediate calculations
 # App inputs: Loan Amount=App!B1, Interest Rate=App!B2, Term=App!B3

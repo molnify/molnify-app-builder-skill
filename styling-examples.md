@@ -538,17 +538,8 @@ body { background: #0f172a; color: #e2e8f0; }
 
 /* Top metrics bar */
 #metricsRow { padding: 0 24px 8px; }
-#outputboxpanel { background: transparent; border: none; box-shadow: none; overflow: visible; }
-#outputboxpanel .panel-heading { display: none; }
-#outputboxpanel .panel-body { padding: 0; }
-#outputboxpanel .row {
-  display: grid !important;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 16px; margin: 0;
-}
-#outputboxpanel .row::before, #outputboxpanel .row::after { display: none; }
-#outputboxpanel [class*="col-"] { width: auto; padding: 0; }
-#outputboxpanel .widget { margin-bottom: 0; }
+/* Output card grid override from above, with tighter minmax(160px) and dark cards: */
+#outputboxpanel .row { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin: 0; }
 #outputboxpanel .widget-stats { background: #1e293b; border-radius: 10px; border: 1px solid #334155; }
 #outputboxpanel h4.boxName { color: #94a3b8; }
 #outputboxpanel p.outputBoxValue { color: #f1f5f9; }
@@ -597,16 +588,8 @@ body { background: #f1f5f9; }
 
 /* Metric cards - 3 columns */
 .dashboard-grid > #outputboxpanel { grid-column: span 3; background: transparent; border: none; box-shadow: none; overflow: visible; }
-#outputboxpanel .panel-heading { display: none; }
-#outputboxpanel .panel-body { padding: 0; }
-#outputboxpanel .row {
-  display: grid !important;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px; margin: 0;
-}
-#outputboxpanel .row::before, #outputboxpanel .row::after { display: none; }
-#outputboxpanel [class*="col-"] { width: auto; padding: 0; }
-#outputboxpanel .widget { margin-bottom: 0; }
+/* Output card grid override from above, but fixed at 3 columns: */
+#outputboxpanel .row { display: grid !important; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 0; }
 #outputboxpanel .widget-stats { border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
 
 /* Chart panels - full width */

@@ -1,6 +1,6 @@
 # Report Templates
 
-Companion to the main reference in `CLAUDE.md`.
+Companion to the main reference.
 
 **IMPORTANT:** The `{{variable}}` placeholder syntax described below is ONLY for report template files (docx/html/markdown). It does NOT work in Excel cells. Excel cells use standard Excel formulas and cell references (e.g., `=A1`, `=SUM(B2:B10)`).
 

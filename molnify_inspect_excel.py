@@ -359,16 +359,16 @@ def main():
     parser = argparse.ArgumentParser(
         description='Inspect an Excel file to plan its conversion into a Molnify app.')
     parser.add_argument('file', help='Excel file to inspect (.xlsx)')
-    parser.add_argument('--text', action='store_true',
-                        help='Output human-readable text instead of JSON')
+    parser.add_argument('--json', action='store_true',
+                        help='Output raw JSON instead of the default human-readable text')
     args = parser.parse_args()
 
     data = inspect_workbook(args.file)
 
-    if args.text:
-        print_text(data)
-    else:
+    if args.json:
         print(json.dumps(data, indent=2, default=str))
+    else:
+        print_text(data)
 
 
 if __name__ == '__main__':

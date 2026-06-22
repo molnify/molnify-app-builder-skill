@@ -101,21 +101,11 @@ Start from the desired mood and audience, then use color wheel relationships:
 - **Hue-shifted shadows, not black.** Shadows that skew cooler and highlights that skew warmer create richer depth than pure black/white overlays.
 - **Functional colors follow convention.** Red = error/urgency. Green = success. Blue = links. Don't reverse these.
 - **Red impairs analytical thinking.** In calculation-heavy apps, avoid red as a dominant color. It overloads the prefrontal cortex and reduces rational decision-making. Reserve it for errors and urgent alerts.
-- **Test contrast.** Light text on light backgrounds and dark text on dark backgrounds are both invisible. Molnify's default panel headers and output boxes have dark backgrounds with white text — if you change these backgrounds to light colors, override the text color too.
+- **Test contrast.** Light text on light backgrounds and dark text on dark backgrounds are both invisible — if you lighten a default dark background, override its text color too.
 
 ### Molnify-Specific Defaults to Override
 
-Molnify's default colors are teal (`#00acac`) for output boxes and buttons, and dark (`#242a30`) for headers and panel headers. These defaults are functional but generic. Override them to match your aesthetic direction:
-
-```
-OutputBoxBackgroundColor: #2d5a7b
-PanelHeaderColor: #1a3a4a
-ButtonColor: #2d5a7b
-TopBannerColor: #1a2332
-HeaderTextColor: #e8e0d6
-```
-
-Use CSS variables in the `CSS` metadata for consistency:
+Molnify's defaults (teal output boxes/buttons, dark headers) are functional but generic — override them with the color metadata properties to match your aesthetic direction. For a cohesive palette, drive everything from CSS variables in the `CSS` metadata:
 
 ```css
 :root {

@@ -1,6 +1,6 @@
 # Custom Frontend (Headless Molnify)
 
-Companion to the main reference in `CLAUDE.md`.
+Companion to the main reference.
 
 Replace Molnify's default UI with a fully custom DOM while keeping the backend calculation engine, actions, and authentication.
 
@@ -191,21 +191,7 @@ Send changed input values, receive calculated output values.
 
 ### POST `/api/execute`
 
-Run an action. Same payload as calculate, plus `actionId`.
-
-**Request:**
-```json
-{
-  "applicationID": "my-app",
-  "requestID": "1709715600000",
-  "dateModified": "1709715500000",
-  "changes": [
-    { "cell": "Sheet1!B2", "value": "42" }
-  ],
-  "actionId": 0,
-  "currentScenarioID": "optional-scenario-id"
-}
-```
+Run an action. Same payload as `/api/calculate`, plus `actionId` (a 0-based integer index) and an optional `currentScenarioID`.
 
 **Key details:**
 - `actionId` is a 0-based integer index - use `MolnifySDK.execute(nameOrIndex)` to avoid dealing with indices
@@ -415,7 +401,7 @@ MolnifySDK.execute('analyzeData').then(function(resp) {
 ```
 
 **Do not wrap `aiprompt` or `http` inside a `multiple` action if you need the response.**
-The `multiple` wrapper consumes the `responsevalue` field — it becomes inaccessible to the caller. Use `skip` formulas on the action directly for conditional execution, and chain follow-up work via `successJavaScript` instead.
+The `multiple` wrapper consumes the `responsevalue` field, making it inaccessible to the caller — execute the action directly instead (see the Actions Reference for `skip`/`successJavaScript`).
 
 **Dropdown options are not accessible via MolnifySDK.**
 `MolnifySDK.getVariable()` and `MolnifySDK.getAllVariables()` return `{cell, name, value, variable, ui}` but NOT the options list for dropdowns. In headless mode, to populate dropdown UIs you must either inline the options in your JavaScript bundle, or create a hidden output that reads the options from a named range and expose it via `variable=`.

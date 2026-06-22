@@ -1,6 +1,6 @@
 # Python Development Environment
 
-Companion to the main reference in `CLAUDE.md`.
+Companion to the main reference.
 
 A Python virtual environment is included for programmatically working with Molnify Excel apps.
 
@@ -31,13 +31,7 @@ Molnify identifies cell types by **exact** color matching (no tolerance). When *
 
 ### Recommended colors (use these when creating apps)
 
-| Cell Type | Color Name | RGB Value | Hex |
-|-----------|------------|-----------|-----|
-| Input | Green | (0, 176, 80) | `#00B050` |
-| Output | Red | (255, 0, 0) | `#FF0000` |
-| Chart/Table | Blue | (0, 112, 192) | `#0070C0` |
-| Action | Yellow | (255, 255, 0) | `#FFFF00` |
-| Metadata | Purple | (112, 48, 160) | `#7030A0` |
+Input `#00B050`, Output `#FF0000`, Chart/Table `#0070C0`, Action `#FFFF00`, Metadata `#7030A0`.
 
 ### Also accepted (for parsing existing apps)
 

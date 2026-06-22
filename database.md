@@ -1,6 +1,6 @@
 # Database
 
-Companion to the main reference in `CLAUDE.md`.
+Companion to the main reference.
 
 ## Table Setup
 
@@ -76,7 +76,7 @@ This creates table `data_<appId>_0` with the four columns plus system columns.
 
 ## Writing Data
 
-Use `insertrow` or `addrecord` actions to write to database tables. See the Actions Reference in CLAUDE.md for full details.
+Use `insertrow` or `addrecord` actions to write to database tables. See the Actions Reference for full details.
 
 ### Unmodified inputs are not sent
 
@@ -162,11 +162,7 @@ JavaScriptAfterLoad: calculateButton();
 
 Database dropdowns populate a Select2 dropdown from a database table. When the user selects a row, mapped columns are automatically written into app input variables.
 
-There are two types:
-
-#### RecordDropdown (`UI: recorddropdown`)
-
-Loads rows from the app's configured record table (`RecordTableName` metadata).
+There are two types. Both share these options:
 
 | UI Option | Description | Default |
 |-----------|-------------|---------|
@@ -175,7 +171,9 @@ Loads rows from the app's configured record table (`RecordTableName` metadata).
 | `orderBy` | SQL ORDER BY clause | `_molnify_timestamp DESC` (if column exists) |
 | `maxRows` | Maximum rows returned | 1000 |
 
-When a row is selected, all table columns that match an app input variable name are automatically populated. Access control is enforced via `RecordTableAccessColumn` metadata — users only see rows where their email matches the access column value.
+#### RecordDropdown (`UI: recorddropdown`)
+
+Loads rows from the app's configured record table (`RecordTableName` metadata) — uses the shared options above. When a row is selected, all table columns that match an app input variable name are automatically populated. Access control is enforced via `RecordTableAccessColumn` metadata — users only see rows where their email matches the access column value.
 
 ```
 UI: recorddropdown;display=customerName&' ('&city&')'
@@ -183,17 +181,13 @@ UI: recorddropdown;display=customerName&' ('&city&')'
 
 #### RowDropdown (`UI: rowdropdown`)
 
-Loads rows from any specified database table.
+Loads rows from any specified database table. Shared options above, plus:
 
 | UI Option | Description | Default |
 |-----------|-------------|---------|
 | `tableName` | Table to query (the `data_` prefix is added automatically if missing) | (required) |
 | `idVariable` | Column to use as the row ID | "recordId" |
-| `display` | Column name or `&`-concatenation expression to show | ID column |
 | `map` | Explicit column-to-variable mapping: `col1->var1,col2->var2` | - |
-| `filter` | SQL WHERE clause with `@variable` references | - |
-| `orderBy` | SQL ORDER BY clause | `_molnify_timestamp DESC` (if column exists) |
-| `maxRows` | Maximum rows returned | 1000 |
 
 When a row is selected, mapped columns are set on the corresponding input variables.
 
@@ -216,4 +210,4 @@ filter=status=@selectedStatus AND region=@selectedRegion
 
 ### Download Query Action
 
-Use `downloadquery` actions to export query results as CSV or JSON files. See the Actions Reference in CLAUDE.md for details.
+Use `downloadquery` actions to export query results as CSV or JSON files. See the Actions Reference for details.

@@ -1,6 +1,6 @@
 # Converting a Plain Excel File into a Molnify App
 
-Companion to the main reference in `CLAUDE.md`.
+Companion to the main reference.
 
 If you have an existing Excel workbook with formulas and data but no Molnify color coding, follow this process to turn it into a working Molnify app. The key principle is **separation**: keep the original model untouched on its own sheet(s), and create new sheets for the Molnify interface and metadata.
 
@@ -44,7 +44,7 @@ Other useful metadata to consider:
 - `EnabledForSave: TRUE` - lets users save scenarios
 - `CSS` - custom styling
 
-See the **Metadata Reference** section in CLAUDE.md for all options. Only include metadata that differs from defaults.
+See the **Metadata Reference** section for all options. Only include metadata that differs from defaults.
 
 ## Step 3: Create an Interface Sheet
 
@@ -86,18 +86,18 @@ In column C of the interface sheet, add semicolon-separated options to improve t
 5  Interest Rate       [GREEN]  0.05                        slider;min=0.01;max=0.15;delta=0.005
 6  Term (years)        [GREEN]  20                          slider;min=1;max=40
 7
-8  Monthly Payment     [RED]    =Model!B10                  decimals=2;prefix=€
-9  Total Paid          [RED]    =Model!B11                  decimals=2;prefix=€
+8  Monthly Payment     [RED]    ="€"&TEXT(ROUND(Model!B10,2),"#,##0.00")
+9  Total Paid          [RED]    ="€"&TEXT(ROUND(Model!B11,2),"#,##0.00")
 ```
 
-See the **Inputs Reference** and **Outputs Reference** sections in CLAUDE.md for all available UI options.
+See the **Inputs Reference** and **Outputs Reference** sections for all available UI options.
 
 ## Step 6: Convert Charts
 
 Native Excel charts will **not** carry over. Molnify uses its own charting. Replace them:
 
 1. Identify the data range the original chart used
-2. Create a blue-cell chart structure on the interface sheet (see Charts and Tables section in CLAUDE.md):
+2. Create a blue-cell chart structure on the interface sheet (see Charts and Tables section):
    - Title cell (no color) - chart name
    - Header row (no color) - series names
    - Label column (no color) - category labels
@@ -211,9 +211,9 @@ This separation keeps the original model maintainable and makes it easy to chang
 2  Interest Rate       [GREEN]  0.05                        slider;min=0.01;max=0.15;delta=0.005
 3  Term (years)        [GREEN]  20                          slider;min=1;max=40
 4
-5  Monthly Payment     [RED]    =Model!B5                   decimals=2;prefix=€
-6  Total Paid          [RED]    =Model!B6                   decimals=2;prefix=€
-7  Total Interest      [RED]    =Model!B7                   decimals=2;prefix=€
+5  Monthly Payment     [RED]    ="€"&TEXT(ROUND(Model!B5,2),"#,##0.00")
+6  Total Paid          [RED]    ="€"&TEXT(ROUND(Model!B6,2),"#,##0.00")
+7  Total Interest      [RED]    ="€"&TEXT(ROUND(Model!B7,2),"#,##0.00")
 ```
 
 `Model` sheet (sheet 3 - original, with input cells rewired):

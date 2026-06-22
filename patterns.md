@@ -1,6 +1,6 @@
 # UX Patterns
 
-Companion to the main reference in `CLAUDE.md`.
+Companion to the main reference.
 
 Reusable patterns that combine inputs, outputs, JavaScript, CSS, and actions to create common user experiences. Each pattern includes the app structure, metadata, and code needed.
 
@@ -147,7 +147,6 @@ CSS:
 ```
 
 **Tips:**
-- Each `tab=` creates a new tab - only set it on the **first** input of each step, not on every input
 - The review step uses an output (not an input) so it recalculates when inputs change. `amongInputs` places it in the input panel, `hideCopy` removes the copy button
 - Use `window.functionName = function(...)` for functions called from inline `onclick` handlers - regular `function` declarations inside `JavaScriptAfterLoad` are not accessible from inline handlers
 - Use `$tabs.eq(cur).click()` to switch tabs - `.tab('show')` causes a jQuery error on Molnify's tab links
@@ -378,7 +377,7 @@ CSS:
 **Tips:**
 - The `addrecord` action automatically inserts (if `recordId` is empty) or updates (if `recordId` has a value). Use `idVariable` if your ID column is not named `recordId`.
 - Use `successCalculate: TRUE` so the table refreshes after saving
-- The "New Contact" button can be replaced with a `resetinputs` action (see CLAUDE.md) to avoid manual `setValueForVariable` calls
+- The "New Contact" button can be replaced with a `resetinputs` action to avoid manual `setValueForVariable` calls
 - To add a delete button, create a separate HTTP or SQL action that deletes by `recordId`
 - For large datasets, add a search input that filters the autofill query dynamically:
   ```
@@ -445,7 +444,6 @@ Add `class=preview-doc-panel` and `hideCopy` to the HTML output's UI options: `U
 **Tips:**
 - Use `TEXT()` for number formatting in formulas: `TEXT(B8*B9, "#,##0.00")`
 - For a "Generate PDF" button, create a `generatereport` action with an HTML template that reuses the same layout - or use the preview HTML directly
-- Long HTML strings in formulas will hit the 256-character limit. Always split across helper cells on a model sheet using `&` concatenation
 - The preview panel can be placed in the right column (default) or moved above inputs with `JavaScriptAfterLoad`
 
 ---
@@ -485,13 +483,8 @@ app.add_input("Property Type", "House",
 app.add_input("Estimated Damage ($)", 0,
     ui="variable=propDamage;min=0;showIfVariable=claimType;showIfValue=Property;resetWhenHidden")
 
-# Health section - only shown when claimType = "Health"
-app.add_input("Hospital/Clinic", "",
-    ui="variable=hospital;dividerName=Health Details;showIfVariable=claimType;showIfValue=Health;resetWhenHidden")
-app.add_input("Treatment Date", "",
-    ui="date;variable=treatmentDate;showIfVariable=claimType;showIfValue=Health;resetWhenHidden")
-app.add_input("Diagnosis", "",
-    ui="textarea;variable=diagnosis;showIfVariable=claimType;showIfValue=Health;resetWhenHidden")
+# Health section - same pattern with showIfValue=Health:
+#   Hospital/Clinic (first input carries dividerName=Health Details), Treatment Date (date), Diagnosis (textarea)
 
 # Common fields at the bottom
 app.add_input("Upload Evidence", "", ui="fileupload;dividerName=Supporting Documents")
@@ -500,7 +493,7 @@ app.add_input("Signature", "", ui="signature;variable=claimSignature")
 
 **Key points:**
 - Every input in a conditional section needs `showIfVariable=claimType;showIfValue=Vehicle` (or Property, Health)
-- Add `resetWhenHidden` so hidden values are reset and not submitted - note that previously entered values reappear when the section is shown again
+- Add `resetWhenHidden` so hidden values are reset and not submitted
 - The `dividerName` on the first input of each section creates the section header. It is also conditionally hidden when its input is hidden
 - Common fields (date, description, uploads, signature) that appear regardless of type do NOT have `showIfVariable`
 
