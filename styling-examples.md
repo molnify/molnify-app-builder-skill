@@ -3,13 +3,13 @@
 Layout recipes for Molnify apps. Each example includes JavaScript (for DOM rearrangement) and CSS.
 
 See `styling.md` for DOM structure, selector reference, and the CSS Grid escape pattern.
-See `design.md` for visual design principles — typography, color, hierarchy, and avoiding generic AI aesthetics. Read it before choosing fonts, colors, or layout direction.
+See `design.md` for visual design principles - typography, color, hierarchy, and avoiding generic AI aesthetics. Read it before choosing fonts, colors, or layout direction.
 
 ## Reusable CSS Blocks
 
 These blocks appear in most examples below. Copy what you need as a starting point.
 
-**Output card grid override** — replaces Bootstrap's `.row` flex with CSS Grid inside the results panel:
+**Output card grid override** - replaces Bootstrap's `.row` flex with CSS Grid inside the results panel:
 ```css
 #outputboxpanel { background: transparent; border: none; box-shadow: none; overflow: visible; }
 #outputboxpanel .panel-heading { display: none; }
@@ -36,13 +36,13 @@ These blocks appear in most examples below. Copy what you need as a starting poi
 .panel-heading { border-radius: 12px 12px 0 0; }
 ```
 
-**Light panel headers** — use when overriding the default dark headers. Note: `PanelHeaderColor` metadata injects `#molnifyAppBody .panel-heading { background-color: ... !important; }` (specificity 1-1-0). To beat it on specific panels, add `.panel` to the selector for 1-2-0:
+**Light panel headers** - use when overriding the default dark headers. Note: `PanelHeaderColor` metadata injects `#molnifyAppBody .panel-heading { background-color: ... !important; }` (specificity 1-1-0). To beat it on specific panels, add `.panel` to the selector for 1-2-0:
 ```css
 #inputpanel.panel .panel-heading { background-color: transparent !important; color: #333 !important; border-bottom: 1px solid #eee; }
 #inputpanel .panel-title { color: inherit; }
 ```
 
-**Strip Bootstrap grid classes** (JS) — the universal escape pattern from `styling.md`:
+**Strip Bootstrap grid classes** (JS) - the universal escape pattern from `styling.md`:
 ```javascript
 $('#leftColumn, #rightColumn').removeClass(function(i, c) {
   return (c.match(/\bcol-\S+/g) || []).join(' ');
@@ -50,69 +50,148 @@ $('#leftColumn, #rightColumn').removeClass(function(i, c) {
 $('#boxRow').removeClass('row');
 ```
 
----
-
-## Bootstrap-Based Layouts
-
-These use BS3 class swapping — simpler but limited to 12ths.
-
-**Tip:** For a narrower input panel without JavaScript, set `InputPanelSmall: TRUE` in metadata (gives 33%/67% split).
-
-### Full-Width Dashboard with Compact Input Bar
-
-Inputs in a horizontal bar at top, charts and outputs below full-width.
-
+**Stack columns full-width** (JS) - drop the default 50/50 split so the input column spans full width on top and the output/chart column spans full width below, and hide the input-panel heading. Inputs can be arranged horizontally by CSS, but that is not done here:
 ```javascript
-JavaScriptAfterLoad:
 $('#leftColumn').removeClass('col-md-6 col-md-4').addClass('col-md-12');
 $('#rightColumn').removeClass('col-md-6 col-md-8').addClass('col-md-12');
 $('#inputpanel .panel-heading').hide();
 calculateButton();
 ```
+
+---
+
+## Skins & modifiers
+
+These layer onto any layout below - apply them on top of a base layout's CSS.
+
+### Dark theme
+
+A dark palette that composes onto any layout - drop it into the `CSS` metadata. Use it when the context calls for it (wall display, kiosk, focused tool), not as a default - see `design.md` on avoiding generic dark-glow aesthetics.
+
+Re-theme by editing the `:root` variables (override example below). Tokens live on `:root`, not `#molnifyAppHtml`, so the body-appended widgets (Select2, date/time pickers) can resolve them. Brand teal (`#00acac`) stays literal - other, non-overridden UI uses it, so tokenising it would let elements drift out of sync.
+
 ```css
-CSS:
-body { background: #f0f2f5; }
-
-/* Compact horizontal inputs */
-#inputpanel { background: white; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-#inputpanel .panel-body { padding: 15px 20px; }
-#inputpanel form { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end; }
-#inputpanel .form-group { margin: 0; flex: 1; min-width: 200px; }
-#inputpanel .control-label { font-size: 12px; }
-
-/* Apply output card grid override and clean panel styling from above */
-```
-
-### Full-Width Metrics Above Inputs
-
-Metrics span full width at top, narrow inputs + charts below. Set `InputPanelSmall: TRUE` in metadata for the 33%/67% split — don't re-swap the column classes in JS to get a width Molnify already provides.
-
-```javascript
-JavaScriptAfterLoad:
-var metricsRow = $('<div class="row"><div class="col-md-12" id="metricsCol"></div></div>');
-metricsRow.insertBefore('#boxRow');
-$('#outputboxpanel').appendTo('#metricsCol');
-calculateButton();
-```
-```css
-CSS:
-body { background: #f0f2f5; }
-
-/* Output card grid override with fixed 4-column layout */
-#outputboxpanel .row {
-  display: grid !important;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin: 0;
+:root {
+  --m-bg: #0f172a;          /* page background */
+  --m-panel: #1e293b;       /* panels, inputs, popovers, pickers */
+  --m-card: #273449;        /* raised output cards */
+  --m-control: #334155;     /* control fills, borders, chart lines */
+  --m-control-2: #475569;   /* hover / active / highlight, stronger borders */
+  --m-text: #e2e8f0;        /* primary text */
+  --m-text-strong: #f1f5f9; /* emphasised text */
+  --m-text-muted: #94a3b8;  /* labels, secondary, chart text */
+  --m-text-faint: #64748b;  /* placeholders, disabled */
+  --m-glow: #cbd5e1;        /* people-matrix hover glow */
 }
-/* Apply remaining output card overrides and clean panel styling from above */
 
-/* Light input panel heading — use .panel to beat Molnify's PanelHeaderColor specificity */
-#inputpanel.panel .panel-heading { background-color: transparent !important; color: #333 !important; border-bottom: 1px solid #e0e0e0; }
-#inputpanel .panel-title { color: inherit; }
+body, #page-container { background: var(--m-bg); color: var(--m-text); }
 
-@media (max-width: 768px) {
-  #outputboxpanel .row { grid-template-columns: 1fr; }
+/* App title (dark-on-dark by default) + top banner (light by default) */
+#pAppTitle { color: var(--m-text-strong) !important; }
+#header { background: var(--m-bg) !important; border-bottom: 1px solid var(--m-control); }
+
+/* Panels */
+#molnifyAppHtml .panel { background: var(--m-panel); border: 1px solid var(--m-control); border-radius: 10px; }
+#molnifyAppHtml .panel-heading { background: transparent !important; color: var(--m-text) !important; border-bottom: 1px solid var(--m-control); }
+
+/* Tabs (nav-tabs-inverse; the active tab's white background is on the <a>) */
+.nav-tabs-inverse > li > a { color: var(--m-text-muted); background: transparent; border: none; }
+.nav-tabs-inverse > li > a:hover, .nav-tabs-inverse > li > a:focus { background: var(--m-control); color: var(--m-text-strong); }
+.nav-tabs-inverse > li.active > a,
+.nav-tabs-inverse > li.active > a:hover,
+.nav-tabs-inverse > li.active > a:focus { background: var(--m-panel) !important; color: var(--m-text-strong) !important; border-color: var(--m-control) !important; }
+#molnifyAppHtml .tab-content { background: transparent; border: none; }
+
+/* Labels + input-panel section dividers (render as <legend>) */
+#molnifyAppHtml .control-label, #molnifyAppHtml .input-label { color: var(--m-text-muted); }
+#molnifyAppHtml legend { color: var(--m-text) !important; border-color: var(--m-control); }
+
+/* Output cards - lighter than the panel + a border so the tiles read as distinct */
+.outputbox .widget-stats { background: var(--m-card) !important; border: 1px solid var(--m-control); }
+.outputbox h4.boxName { color: var(--m-text-muted); }
+.outputbox p.outputBoxValue { color: var(--m-text-strong); }
+/* Respect a per-output custom color (background=/color= UI) instead of the dark default */
+.outputbox .widget-stats[style*="color"] .boxName,
+.outputbox .widget-stats[style*="color"] .outputBoxValue,
+.outputbox .widget-stats[style*="color"] .stats-icon { color: inherit !important; }
+
+/* People matrix: default figures are inline color:black; recolor those, keep custom colors.
+   Hover glow is black by default - make it light. */
+#molnifyAppHtml .peopleMatrixRow > .fa[style*="black"] { color: var(--m-text-muted) !important; }
+#molnifyAppHtml .peopleMatrixRow > .fa:hover { text-shadow: 0 0 5px var(--m-glow); }
+
+/* Headings inside HTML outputs / infotext: the theme forces h1-h6 dark. Let them inherit. */
+#molnifyAppHtml .out-html h1, #molnifyAppHtml .out-html h2, #molnifyAppHtml .out-html h3,
+#molnifyAppHtml .out-html h4, #molnifyAppHtml .out-html h5, #molnifyAppHtml .out-html h6,
+#molnifyAppHtml .input-simple-layout h1, #molnifyAppHtml .input-simple-layout h2, #molnifyAppHtml .input-simple-layout h3,
+#molnifyAppHtml .input-simple-layout h4, #molnifyAppHtml .input-simple-layout h5, #molnifyAppHtml .input-simple-layout h6 { color: inherit; }
+
+/* Buttons */
+.btn { background: var(--m-control); color: var(--m-text); border: 1px solid var(--m-control-2); }
+/* Copy/clipboard buttons → brand teal (literal, see note above) */
+.btn[data-clipboard-action] { background: #00acac !important; border-color: #00acac !important; color: #fff !important; }
+.btn[data-clipboard-action]:hover, .btn[data-clipboard-action]:focus { background: #009393 !important; border-color: #009393 !important; color: #fff !important; }
+
+/* Form fields (white-on-white by default) */
+#molnifyAppHtml .form-control { background: var(--m-bg); border-color: var(--m-control); color: var(--m-text); }
+#molnifyAppHtml .form-control:focus { border-color: var(--m-control-2); box-shadow: none; }
+#molnifyAppHtml .form-control::placeholder { color: var(--m-text-faint); }
+#molnifyAppHtml .input-group-addon { background: var(--m-panel); border-color: var(--m-control); color: var(--m-text-muted); }
+
+/* Numeric +/- steppers and other default buttons (light grey by default) */
+#molnifyAppHtml .btn-default, #molnifyAppHtml .btn-number { background-color: var(--m-control) !important; border-color: var(--m-control-2) !important; color: var(--m-text) !important; }
+#molnifyAppHtml .btn-default:hover, #molnifyAppHtml .btn-number:hover { background-color: var(--m-control-2) !important; color: var(--m-text-strong) !important; }
+
+/* Toggle (switchery): on/off colors are set inline by JS - override via the hidden checkbox's
+   :checked, with !important. On-state = brand teal. */
+#molnifyAppHtml .switchery-options + .switchery { background-color: var(--m-control-2) !important; box-shadow: none !important; border-color: var(--m-control-2) !important; }
+#molnifyAppHtml .switchery-options:checked + .switchery { background-color: #00acac !important; box-shadow: none !important; border-color: #00acac !important; }
+
+/* Select2 v4.1 - appended to <body>, can't scope to #molnifyAppHtml. Selected/highlighted use
+   modifier classes (not [aria-selected]), and Molnify's style.css uses !important. */
+.select2-dropdown { background-color: var(--m-panel) !important; border-color: var(--m-control) !important; }
+.select2-container--default .select2-results__option { color: var(--m-text); }
+.select2-container--default .select2-results__option--selected { background-color: var(--m-control) !important; color: var(--m-text-strong); }
+.select2-container--default .select2-results__option--highlighted.select2-results__option--selectable,
+.select2-container--default .select2-results__option--highlighted[aria-selected] { background-color: var(--m-control-2) !important; color: var(--m-text-strong) !important; }
+.select2-search__field { color: var(--m-text); background: var(--m-bg); }
+.select2-container--default .select2-selection--single { background-color: var(--m-panel) !important; border-color: var(--m-control) !important; }
+.select2-container--default .select2-selection--single .select2-selection__rendered { color: var(--m-text) !important; }
+.select2-container--default .select2-selection--single .select2-selection__arrow b { border-color: var(--m-text-muted) transparent transparent transparent; }
+.select2-container--default .select2-selection--multiple { background-color: var(--m-panel) !important; border-color: var(--m-control) !important; }
+.select2-container--default .select2-selection__choice { background-color: var(--m-control) !important; border-color: var(--m-control-2) !important; color: var(--m-text) !important; }
+.select2-container--default .select2-selection__choice__display { color: var(--m-text) !important; }
+.select2-container--default .select2-selection__choice__remove { color: var(--m-text-muted) !important; }
+
+/* Date picker (bootstrap-datepicker, appended to body) */
+.datepicker, .datepicker.dropdown-menu { background: var(--m-panel); border-color: var(--m-control); color: var(--m-text); }
+.datepicker table tr td, .datepicker table tr th { color: var(--m-text); }
+.datepicker table tr td.day:hover, .datepicker table tr td.focused { background: var(--m-control); }
+.datepicker table tr td.active, .datepicker table tr td.active.active,
+.datepicker table tr td.active:hover { background: var(--m-control-2) !important; color: var(--m-text-strong); }
+.datepicker table tr td.old, .datepicker table tr td.new { color: var(--m-text-faint); }
+
+/* Time picker (bootstrap-timepicker, appended to body) */
+.bootstrap-timepicker-widget.dropdown-menu { background: var(--m-panel); border-color: var(--m-control); color: var(--m-text); }
+.bootstrap-timepicker-widget table td input { background: var(--m-bg); border: 1px solid var(--m-control); color: var(--m-text); }
+.bootstrap-timepicker-widget a { color: var(--m-text-muted); }
+
+/* NVD3 charts - scope text fill to axis + legend only; a blanket `.nvd3 text` would also
+   recolor pie/donut slice labels and break their adaptive per-slice contrast. */
+.nvd3 .nv-axis line, .nvd3 .nv-axis path { stroke: var(--m-control); }
+.nvd3 .nv-axis text, .nvd3 .nv-legend text { fill: var(--m-text-muted) !important; }
+
+/* Waterfall chart is a separate custom SVG (not NVD3): inline-black gridlines/axes + black text */
+#molnifyAppHtml svg.molnify_waterfall-chart line { stroke: var(--m-control) !important; }
+#molnifyAppHtml svg.molnify_waterfall-chart text { fill: var(--m-text-muted); }
+```
+
+**Override example** - a near-black "zinc" palette:
+```css
+:root {
+  --m-bg: #09090b; --m-panel: #18181b; --m-card: #18181b;
+  --m-control: #27272a; --m-control-2: #3f3f46;
+  --m-text: #fafafa; --m-text-strong: #fff; --m-text-muted: #71717a; --m-text-faint: #52525b;
 }
 ```
 
@@ -125,7 +204,6 @@ JavaScriptAfterLoad:
 $('#outputboxpanel .outputbox:first').addClass('hero-metric');
 ```
 ```css
-CSS:
 /* Adapt the background to your app's palette */
 .hero-metric {
   grid-column: 1 / -1;
@@ -137,102 +215,6 @@ CSS:
 }
 .hero-metric p.outputBoxValue { font-size: 3.5em; font-weight: 700; }
 .hero-metric h4.boxName { font-size: 1.2em; opacity: 0.85; }
-```
-
-### Centered Single-Column
-
-Good for form-focused apps and reports.
-
-```javascript
-JavaScriptAfterLoad:
-$('#leftColumn, #rightColumn').removeClass('col-md-4 col-md-6 col-md-8').addClass('col-md-8 col-md-offset-2');
-$('#rightColumn').insertAfter('#leftColumn .panel');
-```
-```css
-CSS:
-#appHeaderRow { max-width: 66.667%; margin: 0 auto; padding: 0 15px; }
-#boxRow { display: block; }
-#leftColumn, #rightColumn { float: none; margin: 0 auto 20px; }
-```
-
-### Full-Width Charts Above Inputs
-
-Move all chart panels above the input/output area.
-
-```javascript
-JavaScriptAfterLoad:
-var chartRow = $('<div class="row chart-row"></div>');
-var chartCol = $('<div class="col-md-12"></div>');
-$('#rightColumn .panel').appendTo(chartCol);
-chartCol.appendTo(chartRow);
-chartRow.insertBefore('#boxRow');
-$('#leftColumn').removeClass('col-md-6 col-md-4').addClass('col-md-12');
-$('#rightColumn').removeClass('col-md-6 col-md-8').addClass('col-md-12');
-calculateButton();
-```
-
-### Horizontal Input Bar (Wizard-Style)
-
-Inputs inline on one row.
-
-```javascript
-JavaScriptAfterLoad:
-$('#leftColumn').removeClass('col-md-6 col-md-4').addClass('col-md-12');
-$('#rightColumn').removeClass('col-md-6 col-md-8').addClass('col-md-12');
-$('#inputpanel .panel-heading').hide();
-calculateButton();
-```
-```css
-CSS:
-#inputpanel form { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
-#inputpanel .form-group { flex: 0 0 auto; min-width: 150px; margin: 0; }
-```
-
-### Kiosk / Presentation Mode
-
-Dark theme, no chrome. Good for wall-mounted dashboards.
-
-```javascript
-JavaScriptAfterLoad:
-$('#header, #appHeaderRow, #inputpanel .panel-heading').hide();
-```
-```css
-CSS:
-.page-header-fixed { padding-top: 0; }
-#page-container { background: #1c1f26; }
-
-#molnifyAppHtml .panel { background: #262a33; border: none; border-radius: 10px; }
-#molnifyAppHtml .panel .panel-heading { background: #2e3340 !important; color: #c8cdd5 !important; border-radius: 10px 10px 0 0 !important; }
-#molnifyAppHtml .control-label, #molnifyAppHtml .input-label { color: #c8cdd5; }
-.outputbox .widget-stats { background: #262a33 !important; }
-.outputbox h4.boxName { color: #8b919d; }
-.outputbox p.outputBoxValue { color: #e8eaed; font-size: 2em; }
-
-/* Chart colors for dark background */
-.nvd3 .nv-axis line, .nvd3 .nv-axis path { stroke: #3a3f4b; }
-.nvd3 text { fill: #8b919d !important; }
-
-/* Apply output card grid override from above */
-```
-
-### Split View with Sticky Inputs
-
-Input panel stays fixed while outputs scroll. Works best with apps that have enough output content (charts, tables) to require scrolling.
-
-```css
-CSS:
-#leftColumn {
-  position: sticky;
-  top: 70px;
-  height: calc(100vh - 90px);
-  overflow-y: auto;
-}
-
-/* Light panel headers (see reusable block above) */
-#inputpanel.panel .panel-heading { background-color: transparent !important; color: #333 !important; border-bottom: 1px solid #e0e0e0; }
-#inputpanel .panel-title { color: inherit; }
-
-/* Apply output card grid override from above */
 ```
 
 ### Borderless / Minimal
@@ -249,10 +231,9 @@ chartRow.insertAfter('#boxRow');
 calculateButton();
 ```
 ```css
-CSS:
 body { background: #f7f5f2; }
 
-/* Strip all panel chrome — scoped to app area */
+/* Strip all panel chrome - scoped to app area */
 #molnifyAppHtml .panel {
   background: transparent !important; border: none !important;
   box-shadow: none !important; border-radius: 0 !important;
@@ -312,101 +293,62 @@ h1#appHeader { font-size: 32px; color: #2a2a2a; font-weight: 400; letter-spacing
 }
 ```
 
-### Toolbar + Canvas
+## Bootstrap-Based Layouts
 
-Inputs compressed into a dark horizontal toolbar, metrics inline below, one large chart filling the rest. Top banner hidden. Feels like a tool, not a form.
+These use BS3 class swapping - simpler but limited to 12ths.
 
-Uses `TopBannerHidden: TRUE` metadata. Select2 dropdowns need explicit dark styling — the dropdown results are appended to `<body>`, not inside the app DOM, so they can't be scoped to `#molnifyAppHtml`.
+**Tip:** For a narrower input panel without JavaScript, set `InputPanelSmall: TRUE` in metadata (gives 33%/67% split).
 
-Outputs don't support `prefix`/`postfix` — use `="$"&TEXT(ROUND(...), "#,##0")` in the formula to include units.
+### Full-Width Dashboard with Compact Input Bar
+
+Inputs in a horizontal bar at top, charts and outputs below full-width.
 
 ```javascript
 JavaScriptAfterLoad:
-$('#leftColumn').removeClass('col-md-6 col-md-4').addClass('col-md-12');
-$('#rightColumn').removeClass('col-md-6 col-md-8').addClass('col-md-12');
-$('#inputpanel .panel-heading').hide();
+// Stack columns full-width (see reusable block above)
+```
+```css
+body { background: #f0f2f5; }
+
+/* Compact horizontal inputs */
+#inputpanel { background: white; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+#inputpanel .panel-body { padding: 15px 20px; }
+#inputpanel form { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end; }
+#inputpanel .form-group { margin: 0; flex: 1; min-width: 200px; }
+#inputpanel .control-label { font-size: 12px; }
+
+/* Apply output card grid override and clean panel styling from above */
+```
+
+### Full-Width Metrics Above Inputs
+
+Metrics span full width at top, narrow inputs + charts below. Set `InputPanelSmall: TRUE` in metadata for the 33%/67% split - don't re-swap the column classes in JS to get a width Molnify already provides.
+
+```javascript
+JavaScriptAfterLoad:
+var metricsRow = $('<div class="row"><div class="col-md-12" id="metricsCol"></div></div>');
+metricsRow.insertBefore('#boxRow');
+$('#outputboxpanel').appendTo('#metricsCol');
 calculateButton();
 ```
 ```css
-CSS:
-body { background: #09090b; color: #fafafa; margin: 0; }
-#appHeaderRow { display: none; }
+body { background: #f0f2f5; }
 
-/* Toolbar input bar */
-#inputpanel { background: #18181b !important; border: none; border-radius: 0; border-bottom: 1px solid #27272a; }
-#inputpanel .panel-heading { display: none; }
-#inputpanel .panel-body { padding: 12px 24px !important; }
-#inputpanel form { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
-#inputpanel .form-group { flex: 0 0 auto; margin: 0; min-width: 250px; }
-#inputpanel .form-group > .col-sm-4 { width: 50%; }
-#inputpanel .form-group > .col-sm-8 { width: 50%; }
-#inputpanel .control-label, #inputpanel .input-label {
-  font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;
-  color: #71717a; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+/* Output card grid override with fixed 4-column layout */
+#outputboxpanel .row {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin: 0;
 }
-#inputpanel .form-control {
-  background: #27272a; border: 1px solid #3f3f46; border-radius: 6px;
-  color: #fafafa; padding: 6px 12px; font-size: 13px;
-}
-#inputpanel .form-control:focus { border-color: #a1a1aa; box-shadow: none; }
-/* Select2 dark theme — dropdown appended to body, can't scope further */
-.select2-dropdown { background: #27272a; border-color: #3f3f46; }
-.select2-results__option { color: #fafafa; }
-.select2-container--default .select2-results__option--highlighted[aria-selected] { background: #3f3f46; color: #fafafa; }
-#inputpanel .select2-container--default .select2-selection--single { background: #27272a; border: 1px solid #3f3f46; border-radius: 6px; }
-#inputpanel .select2-container--default .select2-selection--single .select2-selection__rendered { color: #fafafa; }
-#inputpanel .select2-container--default .select2-selection--single .select2-selection__arrow b { border-color: #a1a1aa transparent transparent transparent; }
-#molnifyAppHtml .btn-primary, #molnifyAppHtml .btn-success { background: #3f3f46; border: 1px solid #52525b; color: #fafafa; border-radius: 6px; font-size: 13px; }
+/* Apply remaining output card overrides and clean panel styling from above */
 
-/* Output metrics - horizontal inline bar */
-#outputboxpanel { background: #18181b !important; border: none !important; box-shadow: none; border-radius: 0; border-bottom: 1px solid #27272a !important; }
-#outputboxpanel .panel-heading { display: none; }
-#outputboxpanel .panel-body { padding: 8px 24px !important; }
-#outputboxpanel .row { display: flex !important; gap: 32px; margin: 0; }
-#outputboxpanel .row::before, #outputboxpanel .row::after { display: none; }
-#outputboxpanel [class*="col-"] { width: auto; max-width: none; padding: 0; flex: 0 0 auto; }
-#outputboxpanel .widget { margin-bottom: 0; }
-#outputboxpanel .widget-stats { background: transparent !important; border-radius: 0; padding: 4px 0 !important; }
-#outputboxpanel .widget-stats .stats-icon { display: none; }
-#outputboxpanel .widget-stats .stats-info { display: flex; align-items: baseline; gap: 8px; }
-#outputboxpanel .widget-stats h4.boxName { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #71717a; margin: 0; }
-#outputboxpanel .widget-stats p.outputBoxValue { font-size: 18px; color: #fafafa; margin: 0; font-weight: 500; }
-
-/* Canvas - full remaining space for chart */
-#rightColumn > .panel { background: #09090b; border: none; border-radius: 0; margin: 0; }
-#rightColumn > .panel .panel-heading {
-  background: transparent !important; color: #a1a1aa !important;
-  border: none; padding: 16px 24px 0;
-  font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
-}
-#rightColumn > .panel .panel-body { padding: 0 24px 24px; }
-#rightColumn > .panel .chart { min-height: 450px; }
-
-.chart-series0 { color: #22c55e; }
-.chart-series1 { color: #3f3f46; }
-.nvd3 .nv-axis line, .nvd3 .nv-axis path { stroke: #27272a; }
-.nvd3 text { fill: #71717a !important; }
+/* Light input panel heading - use .panel to beat Molnify's PanelHeaderColor specificity */
+#inputpanel.panel .panel-heading { background-color: transparent !important; color: #333 !important; border-bottom: 1px solid #e0e0e0; }
+#inputpanel .panel-title { color: inherit; }
 
 @media (max-width: 768px) {
-  #inputpanel form { gap: 8px; }
-  #inputpanel .form-group { flex: 1 1 45%; }
-}
-```
-
-### Small CSS Tweaks
-
-**Cards with shadows and rounded corners:**
-```css
-.panel { border: none; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); overflow: hidden; }
-.panel-heading { border-radius: 16px 16px 0 0; }
-.outputbox { border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-```
-
-**Responsive mobile-first adjustments:**
-```css
-@media (max-width: 768px) {
-  #leftColumn, #rightColumn { width: 100% !important; padding: 0 10px; }
-  .hero-section { padding: 30px 15px; }
+  #outputboxpanel .row { grid-template-columns: 1fr; }
 }
 ```
 
@@ -417,8 +359,8 @@ body { background: #09090b; color: #fafafa; margin: 0; }
 These use the universal escape pattern (strip BS3 grid, apply CSS Grid on `#boxRow`). All require the "Strip Bootstrap grid classes" JS from the top of this file.
 
 **Important when using CSS Grid:**
-- Charts/tables need explicit `rightColumn` or `leftColumn` UI options — default panel alternation breaks in Grid layouts.
-- Call `calculateButton()` at the end of `JavaScriptAfterLoad` — NVD3 charts compute dimensions on render and need a redraw after DOM restructuring.
+- Charts/tables need explicit `rightColumn` or `leftColumn` UI options - default panel alternation breaks in Grid layouts.
+- Call `calculateButton()` at the end of `JavaScriptAfterLoad` - NVD3 charts compute dimensions on render and need a redraw after DOM restructuring.
 
 ### Three-Column Layout
 
@@ -434,7 +376,6 @@ summaryCol.insertAfter('#rightColumn');
 calculateButton();
 ```
 ```css
-CSS:
 body { background: #f8f9fb; }
 
 #boxRow {
@@ -476,7 +417,6 @@ JavaScriptAfterLoad:
 calculateButton();
 ```
 ```css
-CSS:
 body { background: #fafbfc; }
 
 #boxRow {
@@ -508,100 +448,4 @@ body { background: #fafbfc; }
 }
 
 /* Apply output card grid override from top of file */
-```
-
-### Tabbed Dark Dashboard
-
-Read-only dashboard, inputs hidden, dark theme.
-
-```javascript
-JavaScriptAfterLoad:
-// Strip BS3 grid (see top of file)
-$('#leftColumn').hide();
-var metricsRow = $('<div id="metricsRow"></div>');
-$('#outputboxpanel').appendTo(metricsRow);
-metricsRow.insertBefore('#boxRow');
-calculateButton();
-```
-```css
-CSS:
-body { background: #0f172a; color: #e2e8f0; }
-
-#boxRow {
-  display: grid !important;
-  grid-template-columns: 1fr;
-  gap: 20px;
-  padding: 0 24px;
-}
-#leftColumn { display: none; }
-#rightColumn { width: auto !important; float: none !important; padding: 0 !important; }
-
-/* Top metrics bar */
-#metricsRow { padding: 0 24px 8px; }
-/* Output card grid override from above, with tighter minmax(160px) and dark cards: */
-#outputboxpanel .row { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin: 0; }
-#outputboxpanel .widget-stats { background: #1e293b; border-radius: 10px; border: 1px solid #334155; }
-#outputboxpanel h4.boxName { color: #94a3b8; }
-#outputboxpanel p.outputBoxValue { color: #f1f5f9; }
-
-/* Dark chart panels — scope to #molnifyAppHtml to avoid affecting admin sidebar */
-#molnifyAppHtml .panel { background: #1e293b; border: 1px solid #334155; border-radius: 10px; }
-#molnifyAppHtml .panel-heading { background: transparent !important; color: #e2e8f0 !important; border-bottom: 1px solid #334155; }
-
-/* Header */
-#appHeaderRow { background: #0f172a; border-bottom: 1px solid #1e293b; margin-bottom: 16px; }
-h1#appHeader { color: #f1f5f9; }
-.btn { background: #334155; color: #e2e8f0; border: 1px solid #475569; }
-.btn:hover { background: #475569; }
-
-/* Mobile navbar */
-@media (max-width: 768px) { .navbar-header { border-bottom: none !important; } }
-```
-
-### Asymmetric Grid
-
-Inputs + 3 metric cards on top row, charts spanning full width below.
-
-```javascript
-JavaScriptAfterLoad:
-// Strip BS3 grid (see top of file)
-// Prepend (not append) so inputs+metrics appear before charts in DOM
-$('#leftColumn .panel').add('#outputboxpanel').prependTo('#rightColumn');
-$('#leftColumn').hide();
-$('#rightColumn').addClass('dashboard-grid');
-calculateButton();
-```
-```css
-CSS:
-body { background: #f1f5f9; }
-
-.dashboard-grid {
-  display: grid !important;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  width: auto !important; float: none !important; padding: 0 20px !important;
-}
-
-/* Input panel - 1 column */
-.dashboard-grid > #inputpanel { grid-column: span 1; border-radius: 10px; border: none; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-.dashboard-grid > #inputpanel .panel-heading { display: none; }
-
-/* Metric cards - 3 columns */
-.dashboard-grid > #outputboxpanel { grid-column: span 3; background: transparent; border: none; box-shadow: none; overflow: visible; }
-/* Output card grid override from above, but fixed at 3 columns: */
-#outputboxpanel .row { display: grid !important; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 0; }
-#outputboxpanel .widget-stats { border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-
-/* Chart panels - full width */
-.dashboard-grid > .panel {
-  grid-column: 1 / -1;
-  border: none; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-}
-.dashboard-grid > .panel .panel-heading { background: white !important; color: #374151 !important; border-bottom: 1px solid #f0f0f0; }
-
-@media (max-width: 900px) {
-  .dashboard-grid { grid-template-columns: 1fr; }
-  .dashboard-grid > #outputboxpanel { grid-column: span 1; }
-  #outputboxpanel .row { grid-template-columns: 1fr; }
-}
 ```

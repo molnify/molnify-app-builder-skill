@@ -96,7 +96,7 @@ app.add_input("Years", 10, ui="slider;min=1;max=50")
 app.add_input("Annual Contribution", 5000, ui="min=0;decimals=0;prefix=$")
 app.add_input("Inflation Rate (%)", 2.5, ui="slider;min=0;max=10;delta=0.5")
 
-# Outputs — bake the unit into the formula text; prefix/postfix are input-only and do nothing here.
+# Outputs - bake the unit into the formula text; prefix/postfix are input-only and do nothing here.
 app.add_output("Final Value", '="$"&TEXT(ROUND(Model!B8,0),"#,##0")', ui="icon=fa-money")
 app.add_output("Total Contributions", '="$"&TEXT(ROUND(Model!B9,0),"#,##0")')
 app.add_output("Total Growth", '="$"&TEXT(ROUND(Model!B10,0),"#,##0")')

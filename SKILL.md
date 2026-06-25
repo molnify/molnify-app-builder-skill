@@ -3,7 +3,7 @@ name: molnify-app-builder
 description: "Build, convert, validate, and style Molnify apps: spreadsheet-driven web applications where Excel or Google Sheets formulas drive the logic and colored cells define inputs, outputs, charts, and actions. Use when creating a Molnify app from scratch, converting an existing spreadsheet into one, validating or styling an app, or answering questions about how Molnify apps work."
 license: Apache-2.0
 metadata:
-  version: 1.0.4
+  version: 1.0.6
 ---
 
 # Molnify App Development Guide
@@ -72,8 +72,8 @@ Most common patterns at a glance:
 6. **Ensure text is readable on its background** - When customizing colors (buttons, panels, headers), always verify sufficient contrast between text and background. Light text on light backgrounds or dark text on dark backgrounds makes the app unusable.
 
 7. **Display numbers at a sensible scale and precision** - Raw formula results are rarely display-ready: they carry excessive decimals (`33.333333333`) *and* often an awkward magnitude. Two separate decisions:
-   - **Precision:** Round to what the reader can act on. ~3–4 significant figures is plenty for most displays. Use Excel's `ROUND()` in the formula, or the `decimals=N` UI option (and `axisDecimals=N` for chart axes — long axis tick labels are a common readability killer).
-   - **Magnitude:** If values run in the thousands or millions, scale the unit instead of printing every digit. `124 500 SEK` reads better as `124.5 tSEK`, and `8 300 000 SEK` as `8.3 MSEK`. Divide by 1000/1e6 in the formula (or use the `multiplier` UI option) and state the scaled unit in the title — e.g. title "Revenue (tSEK)" rather than a 7-digit axis. Keep the chosen unit consistent across related outputs and a chart's whole axis.
+   - **Precision:** Round to what the reader can act on. ~3-4 significant figures is plenty for most displays. Use Excel's `ROUND()` in the formula, or the `decimals=N` UI option (and `axisDecimals=N` for chart axes - long axis tick labels are a common readability killer).
+   - **Magnitude:** If values run in the thousands or millions, scale the unit instead of printing every digit. `124 500 SEK` reads better as `124.5 tSEK`, and `8 300 000 SEK` as `8.3 MSEK`. Divide by 1000/1e6 in the formula (or use the `multiplier` UI option) and state the scaled unit in the title - e.g. title "Revenue (tSEK)" rather than a 7-digit axis. Keep the chosen unit consistent across related outputs and a chart's whole axis.
    - **Rule of thumb:** before finalizing, ask "at this scale, is this number easy to read at a glance?" An axis labelled `0, 25000, 50000, 75000` should usually be `0, 25, 50, 75` with a "tSEK" axis title. This applies to scalar outputs, table cells, and chart axes alike.
 
 8. **Verify formulas after adding or removing cells** - When inserting or deleting rows/columns, Excel formulas may shift or break. Always verify that all formulas still reference the correct cells after structural changes. This is especially critical when working programmatically (e.g., with openpyxl) where automatic reference adjustment doesn't occur.
@@ -90,11 +90,11 @@ Most common patterns at a glance:
 
 12. **Design with intent, not with effects** - Every app should look like it was designed for its purpose, not generated from a template. Pick a color palette that fits the domain. Choose fonts with character. Avoid generic AI-generated aesthetics: purple gradients on white, uniform rounded corners and card shadows on every element, pulsing animations, gradient text, emoji placeholders, and staggered fade-up animations. Left-aligned content is easier to scan than centered. Vary visual weight instead of making everything look the same. If it looks like every other AI-generated dashboard, it needs a point of view.
 
-13. **Validate the *assembled* string when building formulas in code** - Concatenating formula text in Python (especially adjacent f-strings) easily produces a stray `""` that Excel reads as an *escaped quote*, swallowing every following `&` operator and string into one literal. A corrupted formula doesn't just fail its own cell: on load Excel runs "file level validation and repair" and **strips the entire formula table for that sheet** rather than dropping the one bad formula — so the app can render with every formula gone. Adjacent pieces like `f'="<div>…"'` + `f'"&"<h2>…"'` concatenate to `="<div>…""&"<h2>…"`, where the `""` is misread. After building a formula programmatically, `print`/`assert` the final string and confirm the double-quotes are balanced and every `"&"` is a real operator, not buried inside a literal. `molnify_validate.py` flags formulas with an odd number of double-quotes, which catches the common form of this bug.
+13. **Validate the *assembled* string when building formulas in code** - Concatenating formula text in Python (especially adjacent f-strings) easily produces a stray `""` that Excel reads as an *escaped quote*, swallowing every following `&` operator and string into one literal. A corrupted formula doesn't just fail its own cell: on load Excel runs "file level validation and repair" and **strips the entire formula table for that sheet** rather than dropping the one bad formula - so the app can render with every formula gone. Adjacent pieces like `f'="<div>…"'` + `f'"&"<h2>…"'` concatenate to `="<div>…""&"<h2>…"`, where the `""` is misread. After building a formula programmatically, `print`/`assert` the final string and confirm the double-quotes are balanced and every `"&"` is a real operator, not buried inside a literal. `molnify_validate.py` flags formulas with an odd number of double-quotes, which catches the common form of this bug.
 
 ### CSS & DOM Quick Reference
 
-The rendered DOM does NOT match the spreadsheet — inputs are wrapped in third-party widgets and the selectors differ. `styling.md` has the full DOM tree, selector reference, default color scheme, chart-series colors, the Select2 / Font Awesome / custom-header gotchas, CSS Grid layouts, and dashboard recipes.
+The rendered DOM does NOT match the spreadsheet - inputs are wrapped in third-party widgets and the selectors differ. `styling.md` has the full DOM tree, selector reference, default color scheme, chart-series colors, the Select2 / Font Awesome / custom-header gotchas, CSS Grid layouts, and dashboard recipes.
 
 ### Companion Guides
 
@@ -109,7 +109,7 @@ Alongside this reference, companion guides cover specific needs: `creating-from-
 | Wizard, master-detail, conditional sections | Standard Molnify features | `patterns.md` |
 | Fully custom DOM | Headless mode (`Headless: TRUE`) | `custom-frontend.md` |
 
-**Many "modern" or "professional" requests are met by the second row** — restyling and rearranging the default UI is usually the quickest path. When a design needs a layout or interaction the default UI can't express, a custom (headless) frontend is a fully supported tool — reach for it whenever it fits the goal.
+**Many "modern" or "professional" requests are met by the second row** - restyling and rearranging the default UI is usually the quickest path. When a design needs a layout or interaction the default UI can't express, a custom (headless) frontend is a fully supported tool - reach for it whenever it fits the goal.
 
 ---
 
@@ -249,7 +249,7 @@ Same as inputs: `cell`, `name`, `value`, `UI`, `details`
 | `hidden` | Hide the output | `UI: hidden` |
 | `hideCopy` | Hide copy button (html outputs only) | `UI: hideCopy` |
 | `leftColumn` | Force into left column (works on html, charts, tables, peopleMatrix) | `UI: leftColumn` |
-| `rightColumn` | Force into right column (works on html, charts, tables, peopleMatrix). Without this, panels alternate between columns. **Required when using CSS Grid on `#boxRow`** — the default alternation logic doesn't apply in Grid layouts. | `UI: rightColumn` |
+| `rightColumn` | Force into right column (works on html, charts, tables, peopleMatrix). Without this, panels alternate between columns. **Required when using CSS Grid on `#boxRow`** - the default alternation logic doesn't apply in Grid layouts. | `UI: rightColumn` |
 | `panelHidden` | Panel collapsed by default | `UI: panelHidden` |
 | `dividerName=X` | Section divider above output (requires amongInputs) | `UI: dividerName=Revenue and profit` |
 | `peopleMatrix` | People/team matrix visualization | `UI: peopleMatrix;columns=5;rows=3` |
@@ -266,7 +266,7 @@ Charts and tables use **blue cells** for data values only.
 - Row labels (category names) - NO color
 - UI configuration cell - NO color
 
-**Example — multi-series (single-series is the same with one data column; pie/donut use one column too):**
+**Example - multi-series (single-series is the same with one data column; pie/donut use one column too):**
 ```
 |     | A              | B          | C          | D          | E          |
 |-----|----------------|------------|------------|------------|------------|
@@ -579,7 +579,7 @@ Number sub-actions starting from 1. Each references another action by its `name`
 
 Success handling properties (`successText`, `successUrl`, etc.) set on the multiple action take precedence over those from sub-actions.
 
-**Do not wrap `aiprompt` or `http` actions inside `multiple` if you need their response.** The `multiple` wrapper consumes the `responsevalue` field — the AI or HTTP response becomes inaccessible. Use `skip` formulas on the action directly for conditional execution, and chain follow-up work via `successJavaScript` instead.
+**Do not wrap `aiprompt` or `http` actions inside `multiple` if you need their response.** The `multiple` wrapper consumes the `responsevalue` field - the AI or HTTP response becomes inaccessible. Use `skip` formulas on the action directly for conditional execution, and chain follow-up work via `successJavaScript` instead.
 
 Example - define a `scenariosave` action named `saveStep` and an `email` action named `emailStep`, both with `hidden: TRUE`. Then create the visible button:
 ```
@@ -613,7 +613,7 @@ Send a prompt to an AI model (Google Gemini) and store the response in a variabl
 
 `gemini-pro` requires `thinkingBudget` > 0 and consumes more tokens per request than `gemini-flash`.
 
-**Response handling:** The AI response text is set on the input matching `responseVariable` (default `aipromptresponse`), allowing you to display it or parse it with `FILTERJSON()`. If `responseSchema` is provided, the response is constrained to valid JSON matching the schema — use `FILTERJSON()` on the response variable's cell to extract individual fields from it.
+**Response handling:** The AI response text is set on the input matching `responseVariable` (default `aipromptresponse`), allowing you to display it or parse it with `FILTERJSON()`. If `responseSchema` is provided, the response is constrained to valid JSON matching the schema - use `FILTERJSON()` on the response variable's cell to extract individual fields from it.
 
 **Token quota:** Each execution consumes tokens from the app's assigned token pool. If the pool is exhausted, the action returns an error.
 
@@ -672,7 +672,7 @@ Metadata cells (purple) configure application-wide settings.
 ### Feature Toggles
 | Property | Default | Description |
 |----------|---------|-------------|
-| `AutoCalcEnabled` | TRUE | Auto-calculate on input change. When FALSE, no calculation runs automatically - not on load, not on input change; you must trigger calculation yourself (e.g. `calculateButton()` in `JavaScriptAfterLoad` for the initial calc). **Avoid disabling unless truly required** — disabling as a performance optimization breaks the expected UX and introduces subtle bugs. |
+| `AutoCalcEnabled` | TRUE | Auto-calculate on input change. When FALSE, no calculation runs automatically - not on load, not on input change; you must trigger calculation yourself (e.g. `calculateButton()` in `JavaScriptAfterLoad` for the initial calc). **Avoid disabling unless truly required** - disabling as a performance optimization breaks the expected UX and introduces subtle bugs. |
 | `EnabledForCalculate` | TRUE | Show calculate button (only visible when AutoCalc is FALSE) |
 | `EnabledForSave` | FALSE | Enable scenario saving (shows save/delete/share buttons) |
 | `EnabledForReset` | FALSE | Show reset button |
@@ -698,9 +698,9 @@ Metadata cells (purple) configure application-wide settings.
 | Property | Description |
 |----------|-------------|
 | `CSS` | Complete custom CSS |
-| `additionalCSS` | CSS appended after the main `CSS` value. Use when a template provides base CSS and you want to extend it without replacing it. Also useful when CSS exceeds a single cell's 32,767-character limit — split across `CSS` and `additionalCSS`. |
-| `TopBannerColor` | Top banner color |
-| `HeaderTextColor` | Header text color. **Note:** The header row (`#appHeaderRow`) has a dark background (`#242a30`) by default, so light text works. If you change `TopBannerColor` to a light color, you must also set `HeaderTextColor` to a dark value, or the text becomes invisible. |
+| `additionalCSS` | CSS appended after the main `CSS` value. Use when a template provides base CSS and you want to extend it without replacing it. Also useful when CSS exceeds a single cell's 32,767-character limit - split across `CSS` and `additionalCSS`. |
+| `TopBannerColor` | Top banner color. Paints the **top banner** (`#header`, the fixed full-width bar above the app), via `#molnifyAppBody .container-fluid`. This is a different element from `#appHeaderRow` (the app title bar inside `#content`) - it does not color that. |
+| `HeaderTextColor` | Header text color (the banner title, `#molnifyAppBody h1`). The banner has a dark background by default, so light text works. If you set `TopBannerColor` to a light color, also set `HeaderTextColor` to a dark value, or the text becomes invisible. |
 | `PanelHeaderColor` | Panel header color |
 | `ButtonColor` | Default button color |
 | `ButtonActiveColor` | Selected button color |
@@ -743,7 +743,7 @@ Metadata cells (purple) configure application-wide settings.
 | Property | When it runs | Description |
 |----------|--------------|-------------|
 | `JavaScript` | Page load (early) | Custom JS code, runs before app is fully interactive |
-| `additionalJavaScript` | Page load (early) | JavaScript appended after the main `JavaScript` value. Use when a template provides base JS and you want to extend it, or when JS exceeds a single cell's 32,767-character limit — split across `JavaScript` and `additionalJavaScript`. |
+| `additionalJavaScript` | Page load (early) | JavaScript appended after the main `JavaScript` value. Use when a template provides base JS and you want to extend it, or when JS exceeds a single cell's 32,767-character limit - split across `JavaScript` and `additionalJavaScript`. |
 | `JavaScriptAfterLoad` | Page load (late) | JS to run after app fully loads and initial calculation completes |
 | `JavaScriptAfterCalc` | Every calculation | JS to run after each calculation (including initial load) |
 

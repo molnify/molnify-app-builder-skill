@@ -40,11 +40,11 @@ from molnify_builder import AppBuilder
 
 app = AppBuilder("bmi-calculator", "BMI Calculator")
 
-# add_input returns the row number — use it in formulas
+# add_input returns the row number - use it in formulas
 row_weight = app.add_input("Weight (kg)", 70, ui="slider;min=30;max=200")
 row_height = app.add_input("Height (cm)", 170, ui="slider;min=100;max=220")
 
-# Use returned rows — no manual counting needed
+# Use returned rows - no manual counting needed
 row_bmi = app.add_output("BMI", f"=App!B{row_weight}/(App!B{row_height}/100)^2", ui="decimals=1")
 app.add_output("Category", f'=IF(App!B{row_bmi}<18.5,"Underweight",IF(App!B{row_bmi}<25,"Normal",IF(App!B{row_bmi}<30,"Overweight","Obese")))')
 
@@ -63,7 +63,7 @@ app.add_input("Status", "Active", options=["Active", "Inactive", "Pending"])
 app.add_input("Priority", "Medium", options=["Low", "Medium", "High", "Critical"])
 ```
 
-This creates a hidden `_Options` sheet with named ranges and data validation — no manual openpyxl post-processing needed. The `dropdown` UI type is added automatically.
+This creates a hidden `_Options` sheet with named ranges and data validation - no manual openpyxl post-processing needed. The `dropdown` UI type is added automatically.
 
 #### Interleaving Outputs Among Inputs
 
@@ -96,13 +96,13 @@ from molnify_builder import AppBuilder
 
 app = AppBuilder("sales-forecast", "Sales Forecast Tool")
 
-# Inputs — use returned rows in output formulas
+# Inputs - use returned rows in output formulas
 row_rev = app.add_input("Base Revenue", 100000, ui="min=0;decimals=0;prefix=$")
 row_growth = app.add_input("Growth Rate (%)", 10, ui="slider;min=-50;max=100;delta=5")
 row_years = app.add_input("Years", 5, ui="slider;min=1;max=20")
 row_email = app.add_input("Recipient Email", "", ui="placeholder=email@company.com")
 
-# Outputs — reference inputs by row variable
+# Outputs - reference inputs by row variable
 R, G, Y = f"App!B{row_rev}", f"App!B{row_growth}", f"App!B{row_years}"
 app.add_output("Year 1 Revenue", f'="$"&TEXT(ROUND({R}*(1+{G}/100),0),"#,##0")')
 app.add_output("Final Year Revenue", f'="$"&TEXT(ROUND({R}*(1+{G}/100)^{Y},0),"#,##0")')

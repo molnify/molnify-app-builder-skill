@@ -224,7 +224,7 @@ openpyxl also writes empty `<v/>` elements on formula cells, which Molnify may i
 
 ## Common Pitfall: Hardcoded Cell References
 
-**For new apps**, use `AppBuilder` — it returns row numbers from `add_input()`/`add_output()` so formulas are always correct. See `creating-from-scratch.md`.
+**For new apps**, use `AppBuilder` - it returns row numbers from `add_input()`/`add_output()` so formulas are always correct. See `creating-from-scratch.md`.
 
 **For raw openpyxl** (modifying existing files), never hardcode cell references. Track actual positions:
 
@@ -241,6 +241,6 @@ final_row = row
 ws.cell(row=row, column=2, value=1500)
 row += 1
 
-# Build formula from tracked positions — not from a mental model of where cells are
+# Build formula from tracked positions - not from a mental model of where cells are
 ws.cell(row=row + 1, column=2, value=f"=B{final_row}-B{initial_row}")
 ```

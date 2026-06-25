@@ -4,44 +4,48 @@ Companion to the main reference.
 
 ## Constraints
 
-- Molnify uses Bootstrap 3 with a fixed DOM structure — you override, not replace
+- Molnify uses Bootstrap 3 with a fixed DOM structure - you override, not replace
 - Fonts come from Google Fonts (loaded via `HeaderFont`/`BodyFont` metadata)
-- CSS is injected via the `CSS` metadata cell — one big block, no separate files
+- CSS is injected via the `CSS` metadata cell - one big block, no separate files
 - Layout restructuring requires `JavaScriptAfterLoad` for DOM manipulation
-- The default 50/50 two-column split is a starting point, not a constraint — if a user asks for a "modern", "dashboard", or "professional" design, assume layout changes are needed
+- The default 50/50 two-column split is a starting point, not a constraint - if a user asks for a "modern", "dashboard", or "professional" design, assume layout changes are needed
 
 ## HTML DOM Structure
 
 Understanding the DOM structure helps write effective CSS. Here's the layout:
 
 ```
-#content                          <- Main content container
-├── #appHeaderRow                 <- Header row with app title and buttons
-│   ├── .appHeaderLeft            <- App title (h1#appHeader)
-│   └── #appMenu                  <- Scenario selector, action buttons
-│       └── .appHeaderGroup       <- Button groups (save, print, reset, etc.)
-│
-└── #boxRow                       <- Main content row
-    ├── #leftColumn               <- Input panel (col-md-6 or col-md-4 if InputPanelSmall)
-    │   └── #inputpanel.panel     <- Panel container
-    │       ├── .panel-heading    <- "Inputs" title + collapse buttons
-    │       │   └── .nav-tabs     <- Tab navigation (if tabs defined)
-    │       └── .panel-body
-    │           └── .tab-content  <- Tab containers
-    │               └── .tab-pane <- Individual tab
-    │                   └── .form-group <- Each input
-    │                       ├── label.control-label  <- Input title
-    │                       └── .input-group         <- Input control
-    │
-    └── #rightColumn              <- Output panel (col-md-6 or col-md-8)
-        ├── #outputboxpanel.panel <- Scalar outputs ("Results" box)
-        │   └── .panel-body
-        │       └── .outputbox    <- Individual output value
-        │
-        └── .panel                <- Chart/table/HTML panels
-            ├── .panel-heading    <- Output title
-            └── .panel-body
-                └── .chart / .out-table-div / .out-html
+body                                          <- Page background; your `body { background }` lands here
+└── #page-container.page-header-fixed         <- padding-top:54px clears the fixed top banner
+    └── #molnifyAppWrapper > … > #molnifyAppBody   <- metadata color rules are scoped to #molnifyAppBody
+        ├── #header.navbar.navbar-fixed-top   <- Top banner (TopBannerColor paints its .container-fluid)
+        └── #content                          <- Main content container (theme: .content { padding:20px })
+            ├── #appHeaderRow                 <- App title bar - NOT the same element as #header above
+            │   ├── .appHeaderLeft            <- App title (h1#appHeader)
+            │   └── #appMenu                  <- Scenario selector, action buttons
+            │       └── .appHeaderGroup       <- Button groups (save, print, reset, etc.)
+            │
+            └── #boxRow                       <- Main content row
+                ├── #leftColumn               <- Input panel (col-md-6 or col-md-4 if InputPanelSmall)
+                │   └── #inputpanel.panel     <- Panel container
+                │       ├── .panel-heading    <- "Inputs" title + collapse buttons
+                │       │   └── .nav-tabs     <- Tab navigation (if tabs defined)
+                │       └── .panel-body
+                │           └── .tab-content  <- Tab containers
+                │               └── .tab-pane <- Individual tab
+                │                   └── .form-group <- Each input
+                │                       ├── label.control-label  <- Input title
+                │                       └── .input-group         <- Input control
+                │
+                └── #rightColumn              <- Output panel (col-md-6 or col-md-8)
+                    ├── #outputboxpanel.panel <- Scalar outputs ("Results" box)
+                    │   └── .panel-body
+                    │       └── .outputbox    <- Individual output value
+                    │
+                    └── .panel                <- Chart/table/HTML panels
+                        ├── .panel-heading    <- Output title
+                        └── .panel-body
+                            └── .chart / .out-table-div / .out-html
 ```
 
 ### Component DOM Details
@@ -146,11 +150,11 @@ Understanding the DOM structure helps write effective CSS. Here's the layout:
 
 Common reasons custom CSS silently fails:
 
-- **`#content`** ships a default `padding: 20px 25px` — zero it when building a custom grid so it doesn't compound with the grid's own padding.
-- **Icons are Font Awesome 4.7.0.** FA5/6 names do not render — use the FA4 name: `fa-line-chart` (not `fa-chart-line`), `fa-coffee` (not `fa-mug-hot`), `fa-cubes` (not `fa-box`), `fa-money` (not `fa-coins`). When an icon silently doesn't appear, check it against the FA4 set.
-- **Dropdowns render as Select2 4.0.13**, not a plain `<select>`. The native `<select>` is hidden (`.select2-hidden-accessible`), so styling `.form-control`/`.inputElement` does nothing. Style the widget instead: `.select2-selection--single` (the visible box), `.select2-selection__rendered` (the selected text), `.select2-selection__arrow` (the caret). The **results list is appended to `<body>`**, not inside `#inputpanel`, so `.select2-dropdown` / `.select2-results__option` rules **cannot be scoped** to the app — write them unscoped. Selected options are flagged with the **`[aria-selected]` attribute** (Select2 4.0), not a `--selected` class; Molnify's bundled Select2 CSS loads **after** custom CSS and ties on specificity, so raise specificity (e.g. append `[aria-selected]`) to win.
-- **Custom header layout:** `#appHeaderRow` is a Bootstrap `.row`, and both `h1#appHeader` and the nested `p#pAppTitle` carry bottom margins — which top-aligns the title in a custom layout. The info/print/save buttons are `.btn-success` (teal). To restyle: make `#appHeaderRow` a flex container, zero the margins on `#appHeader`/`#pAppTitle`, suppress the `.row` clearfix pseudo-elements (`#appHeaderRow::before/::after { content: none; }`), and restyle the buttons.
-- When custom CSS seems to have no effect, **inspect the real rendered DOM in the browser console** — Molnify's DOM diverges from the spreadsheet and wraps inputs in third-party widgets (Select2), so the element you're targeting may be hidden or replaced.
+- **`#content`** ships a default `padding: 20px 25px` - zero it when building a custom grid so it doesn't compound with the grid's own padding.
+- **Icons are Font Awesome 4.7.0.** FA5/6 names do not render - use the FA4 name: `fa-line-chart` (not `fa-chart-line`), `fa-coffee` (not `fa-mug-hot`), `fa-cubes` (not `fa-box`), `fa-money` (not `fa-coins`). When an icon silently doesn't appear, check it against the FA4 set.
+- **Dropdowns render as Select2 4.0.13**, not a plain `<select>`. The native `<select>` is hidden (`.select2-hidden-accessible`), so styling `.form-control`/`.inputElement` does nothing. Style the widget instead: `.select2-selection--single` (the visible box), `.select2-selection__rendered` (the selected text), `.select2-selection__arrow` (the caret). The **results list is appended to `<body>`**, not inside `#inputpanel`, so `.select2-dropdown` / `.select2-results__option` rules **cannot be scoped** to the app - write them unscoped. Selected options are flagged with the **`[aria-selected]` attribute** (Select2 4.0), not a `--selected` class; Molnify's bundled Select2 CSS loads **after** custom CSS and ties on specificity, so raise specificity (e.g. append `[aria-selected]`) to win.
+- **Custom header layout:** `#appHeaderRow` is a Bootstrap `.row`, and both `h1#appHeader` and the nested `p#pAppTitle` carry bottom margins - which top-aligns the title in a custom layout. The info/print/save buttons are `.btn-success` (teal). To restyle: make `#appHeaderRow` a flex container, zero the margins on `#appHeader`/`#pAppTitle`, suppress the `.row` clearfix pseudo-elements (`#appHeaderRow::before/::after { content: none; }`), and restyle the buttons.
+- When custom CSS seems to have no effect, **inspect the real rendered DOM in the browser console** - Molnify's DOM diverges from the spreadsheet and wraps inputs in third-party widgets (Select2), so the element you're targeting may be hidden or replaced.
 
 ## Targeting Specific Panels
 
@@ -221,7 +225,6 @@ OutputBoxBackgroundColor: #00acac
 
 **2. Add custom CSS for fine-tuning:**
 ```css
-CSS:
 /* Rounded corners on panels */
 .panel { border-radius: 8px; overflow: hidden; }
 
@@ -240,7 +243,6 @@ CSS:
 
 **3. Responsive adjustments:**
 ```css
-CSS:
 /* Stack columns on mobile */
 @media (max-width: 768px) {
   #leftColumn, #rightColumn { width: 100%; }
@@ -251,7 +253,6 @@ CSS:
 **4. Chart colors (via hidden divs):**
 Chart series colors are controlled by `.chart-series0` through `.chart-series39`:
 ```css
-CSS:
 .chart-series0 { color: #3498db; }
 .chart-series1 { color: #e74c3c; }
 .chart-series2 { color: #2ecc71; }
@@ -262,7 +263,6 @@ CSS:
 
 **Clean modern look:**
 ```css
-CSS:
 body { background: #f5f6fa; }
 .panel { border: none; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
 .panel-heading { border-radius: 12px 12px 0 0; }
@@ -272,7 +272,6 @@ body { background: #f5f6fa; }
 
 **Compact dense layout:**
 ```css
-CSS:
 .form-group { margin-bottom: 8px; }
 .panel-body { padding: 10px; }
 .control-label { font-size: 12px; }
@@ -281,7 +280,6 @@ CSS:
 
 **Hide elements:**
 ```css
-CSS:
 #appHeaderRow { display: none; }           /* Hide entire header */
 .panel-heading-btn { display: none; }      /* Hide collapse buttons */
 #scenario-chooser { display: none; }       /* Hide scenario dropdown */
@@ -409,7 +407,6 @@ $('#boxRow').removeClass(function(i, classes) {
 });
 ```
 ```css
-CSS:
 /* Replace Bootstrap grid with CSS Grid */
 #boxRow {
   display: grid !important;
@@ -432,10 +429,10 @@ CSS:
 ```
 
 **Important when using CSS Grid:**
-- **Don't starve the input column.** Treat the built-in `InputPanelSmall` width (33% of `#boxRow`) as the floor — do not render inputs narrower than that. Prefer `minmax(360px, 33%) 1fr` over a fixed pixel sidebar. When in doubt, just set `InputPanelSmall: TRUE` in metadata instead of rebuilding the grid.
-- **Charts/tables need `rightColumn` or `leftColumn` UI options** — Molnify's default panel alternation between columns doesn't work reliably in CSS Grid layouts. Explicitly set `UI: barChart;rightColumn` (or `leftColumn`) on every chart and table to ensure correct placement.
+- **Don't starve the input column.** Treat the built-in `InputPanelSmall` width (33% of `#boxRow`) as the floor - do not render inputs narrower than that. Prefer `minmax(360px, 33%) 1fr` over a fixed pixel sidebar. When in doubt, just set `InputPanelSmall: TRUE` in metadata instead of rebuilding the grid.
+- **Charts/tables need `rightColumn` or `leftColumn` UI options** - Molnify's default panel alternation between columns doesn't work reliably in CSS Grid layouts. Explicitly set `UI: barChart;rightColumn` (or `leftColumn`) on every chart and table to ensure correct placement.
 - **Don't combine `leftColumn`/`rightColumn` hints with manual re-parenting.** Those hints split panels across `#leftColumn` and `#rightColumn`, so a recipe that re-parents only `#leftColumn .panel` (like the asymmetric-grid example) grabs just half of them and scrambles document order. Pick one approach: either let the hints place panels, **or** drop the hints, give each panel its own `class=`, and re-parent *every* panel into the grid in an explicit, deterministic order.
-- **Call `calculateButton()` at the end of `JavaScriptAfterLoad`** — NVD3 charts compute their dimensions on render. If DOM restructuring changes container sizes, charts may draw with zero width or stale dimensions. A final `calculateButton()` forces a redraw with correct dimensions.
+- **Call `calculateButton()` at the end of `JavaScriptAfterLoad`** - NVD3 charts compute their dimensions on render. If DOM restructuring changes container sizes, charts may draw with zero width or stale dimensions. A final `calculateButton()` forces a redraw with correct dimensions.
 
 Once you've applied this pattern, `grid-template-columns` controls everything. Some examples:
 
@@ -484,17 +481,19 @@ Always check which element has the Bootstrap classes and target accordingly.
 
 Complete layout recipes are in **`styling-examples.md`**. Each includes JavaScript and CSS.
 
-| Example | Description | Approach |
-|---------|-------------|----------|
-| Full-width dashboard | Horizontal input bar at top, charts below | BS3 class swap |
-| Full-width metrics above inputs | Metrics span full width, narrow inputs + charts below | BS3 class swap |
-| Hero metric | First output card large and full-width | CSS addition |
-| Centered single-column | Form-focused, narrow centered layout | BS3 class swap |
-| Full-width charts above inputs | Charts moved above the input/output area | BS3 class swap |
-| Horizontal input bar | Inputs inline on one row | BS3 + Flexbox |
-| Kiosk mode | Dark theme, no chrome | CSS only |
-| Sticky inputs | Input panel stays fixed while scrolling | CSS only |
+Layouts:
+
+| Layout | Description | Approach |
+|--------|-------------|----------|
+| Full-width dashboard | Compact input bar at top, outputs + charts below | BS3 class swap |
+| Full-width metrics above inputs | KPI cards span full width, narrow inputs + charts below | BS3 class swap |
 | Three-column layout | Inputs \| Charts \| Summary metrics | CSS Grid escape |
 | Data-entry focused | Wide centered form, results below | CSS Grid escape |
-| Tabbed dark dashboard | No inputs, dark theme, metrics + charts | CSS Grid escape |
-| Asymmetric grid | Inputs + metric cards top row, charts full-width below | CSS Grid escape |
+
+Skins & modifiers (layer onto any layout):
+
+| Modifier | Description |
+|----------|-------------|
+| Dark theme | Tokenised dark palette that composes onto any layout |
+| Hero metric | First output card large and full-width |
+| Borderless / minimal | Strip panel chrome; typography-driven |

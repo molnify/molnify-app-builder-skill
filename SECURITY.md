@@ -16,7 +16,7 @@ team can verify it's safe before allowing its use.
 The tools:
 
 - **Make no network calls** (other than `pip install` of the bundled wheel fetching
-  `openpyxl`, which you can skip if `openpyxl` is already available — e.g. by installing
+  `openpyxl`, which you can skip if `openpyxl` is already available - e.g. by installing
   with `--no-deps`).
 - **Send no telemetry** and collect no usage data.
 - **Access no credentials, environment secrets, or files** beyond the spreadsheet paths

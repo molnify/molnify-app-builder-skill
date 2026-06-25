@@ -617,7 +617,7 @@ Render chart types that Molnify doesn't support natively (radar, polar area, hea
 
 **How it works:**
 - `HeadHTML` metadata loads the chart library from a CDN
-- An HTML output (`UI: html`) provides a panel in the right column — the `class=` UI option identifies it
+- An HTML output (`UI: html`) provides a panel in the right column - the `class=` UI option identifies it
 - `JavaScriptAfterLoad` creates a `<canvas>` as a sibling of `.out-html` (not inside it) and initializes the chart
 - `JavaScriptAfterCalc` reads input values via `getValueForVariable()` and updates the chart data
 
@@ -627,7 +627,7 @@ Render chart types that Molnify doesn't support natively (radar, polar area, hea
 ```python
 app = AppBuilder("assessment", "Team Assessment")
 
-# Slider inputs — variable= exposes values to JS
+# Slider inputs - variable= exposes values to JS
 app.add_input("Technical Skills", 8, ui="variable=technical;slider;min=1;max=10;delta=1")
 app.add_input("Communication", 6, ui="variable=communication;slider;min=1;max=10;delta=1")
 app.add_input("Leadership", 5, ui="variable=leadership;slider;min=1;max=10;delta=1")
@@ -635,7 +635,7 @@ app.add_input("Problem Solving", 9, ui="variable=problemSolving;slider;min=1;max
 app.add_input("Creativity", 7, ui="variable=creativity;slider;min=1;max=10;delta=1")
 app.add_input("Teamwork", 8, ui="variable=teamwork;slider;min=1;max=10;delta=1")
 
-# HTML output — class= lets JS find the panel; content doesn't matter (hidden by JS)
+# HTML output - class= lets JS find the panel; content doesn't matter (hidden by JS)
 app.add_output("Skills Radar", " ", ui="html;hideCopy;rightColumn;class=radar-panel")
 ```
 
@@ -702,8 +702,8 @@ updateRadar();
 ```
 
 **Tips:**
-- Define the chart instance and update function in `JavaScriptAfterLoad`, call the update function from `JavaScriptAfterCalc` — don't recreate the chart on each calc
-- Use `getValueForVariable()` to read input values in JS — this is the bridge between Molnify's calc cycle and external libraries
+- Define the chart instance and update function in `JavaScriptAfterLoad`, call the update function from `JavaScriptAfterCalc` - don't recreate the chart on each calc
+- Use `getValueForVariable()` to read input values in JS - this is the bridge between Molnify's calc cycle and external libraries
 - For computed values that aren't direct inputs, use hidden outputs with `variable=` (e.g., `ui="variable=derivedValue;hidden"`) and read them the same way
-- The `class=` UI option is applied to `.panel-body`, not the outer `.panel` — use `.closest('.panel').find('.panel-body')` to navigate to the right container
+- The `class=` UI option is applied to `.panel-body`, not the outer `.panel` - use `.closest('.panel').find('.panel-body')` to navigate to the right container
 - This technique works with any JS library that renders into a DOM element: Chart.js, D3, Leaflet, Three.js, etc.

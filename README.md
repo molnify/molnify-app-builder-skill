@@ -90,7 +90,7 @@ and how to report a concern.
 
 | File | Purpose |
 |------|---------|
-| `SKILL.md` | Entry point — metadata + the primary build reference |
+| `SKILL.md` | Entry point - metadata + the primary build reference |
 | `creating-from-scratch.md`, `converting-excel.md` | Step-by-step build workflows |
 | `patterns.md`, `design.md`, `styling.md`, `styling-examples.md` | UX, design, and CSS |
 | `database.md`, `custom-frontend.md`, `report-templates.md`, `advanced-topics.md`, `python.md` | Deeper topics |

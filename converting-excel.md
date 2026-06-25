@@ -178,7 +178,7 @@ This separation keeps the original model maintainable and makes it easy to chang
 | Multi-sheet content missing | `ParseAllSheets` not set | Add metadata `ParseAllSheets: TRUE` |
 | Intermediate values visible to user | Intermediate cell is colored | Leave intermediate cells uncolored on the model sheet |
 | Random cells detected as outputs/inputs | Conditional formatting or incidental colors on model sheets | Add `molnifyIgnore` in cell A1 of each model sheet |
-| Dropdown is empty in the app | The source file uses the x14 dataValidation extension (`<x14:dataValidation>`, common in recent Excel/Google Sheets), which Molnify ignores — it reads only standard data validation | Recreate the dropdown as a standard data validation (e.g. via openpyxl) referencing a named range of the list values |
+| Dropdown is empty in the app | The source file uses the x14 dataValidation extension (`<x14:dataValidation>`, common in recent Excel/Google Sheets), which Molnify ignores - it reads only standard data validation | Recreate the dropdown as a standard data validation (e.g. via openpyxl) referencing a named range of the list values |
 
 ## Minimal Conversion Example
 

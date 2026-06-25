@@ -15,7 +15,7 @@ Replace Molnify's default UI with a fully custom DOM while keeping the backend c
 - If you want a few custom components → use HTML outputs with `amongInputs`
 - If you want custom buttons or navigation → see the wizard and grouped sections patterns in `patterns.md`
 
-**Key principle:** The JavaScript is only the UI layer. All business logic, calculations, validation, and data transformations belong in the spreadsheet. Send input values to the backend via `MolnifySDK.calculate()` and read results from the response — do not reimplement formulas in JS. This keeps the spreadsheet as the single source of truth and means the app works identically whether served via headless mode or the default UI.
+**Key principle:** The JavaScript is only the UI layer. All business logic, calculations, validation, and data transformations belong in the spreadsheet. Send input values to the backend via `MolnifySDK.calculate()` and read results from the response - do not reimplement formulas in JS. This keeps the spreadsheet as the single source of truth and means the app works identically whether served via headless mode or the default UI.
 
 ---
 
@@ -97,10 +97,10 @@ Also available in standard (non-headless) apps.
 
 For apps with `recorddropdown` or `rowdropdown` inputs, the SDK provides methods to search and select rows without the default Select2 UI.
 
-**`searchDropdown(cell, query, changes)`** — Search for matching rows.
-- `cell` — cell reference of the dropdown input (e.g., `"Sheet1!B5"`)
-- `query` — search string (default `""` returns all rows up to `maxRows`)
-- `changes` — `[{variable, value}, ...]` for `@variable` filter resolution (optional)
+**`searchDropdown(cell, query, changes)`** - Search for matching rows.
+- `cell` - cell reference of the dropdown input (e.g., `"Sheet1!B5"`)
+- `query` - search string (default `""` returns all rows up to `maxRows`)
+- `changes` - `[{variable, value}, ...]` for `@variable` filter resolution (optional)
 
 ```javascript
 MolnifySDK.searchDropdown('App!B3', 'Swe').then(function(items) {
@@ -109,28 +109,28 @@ MolnifySDK.searchDropdown('App!B3', 'Swe').then(function(items) {
 });
 ```
 
-**`getDropdownRowData(cell, rowId, changes)`** — Fetch the full row after selection.
-- `cell` — same cell reference used in `searchDropdown`
-- `rowId` — the `id` from a search result item
-- `changes` — `[{variable, value}, ...]` for `@variable` filter resolution (optional)
+**`getDropdownRowData(cell, rowId, changes)`** - Fetch the full row after selection.
+- `cell` - same cell reference used in `searchDropdown`
+- `rowId` - the `id` from a search result item
+- `changes` - `[{variable, value}, ...]` for `@variable` filter resolution (optional)
 
 Returns `{row, idColumn, map}` where:
-- `row` — `{columnName: value}` for all columns in the selected row
-- `idColumn` — the ID column name (e.g., `"recordId"` or custom `idVariable`)
-- `map` — explicit column-to-variable mapping string if configured (e.g., `"name->custName,email->custEmail"`), or absent for auto-mapping
+- `row` - `{columnName: value}` for all columns in the selected row
+- `idColumn` - the ID column name (e.g., `"recordId"` or custom `idVariable`)
+- `map` - explicit column-to-variable mapping string if configured (e.g., `"name->custName,email->custEmail"`), or absent for auto-mapping
 
 ```javascript
 MolnifySDK.getDropdownRowData('App!B3', '42').then(function(data) {
   console.log(data.row.name);      // "Sweden"
   console.log(data.idColumn);      // "recordId"
-  // Apply values to your UI manually — the SDK does not auto-set variables
+  // Apply values to your UI manually - the SDK does not auto-set variables
 });
 ```
 
 ### File Upload
 
-**`uploadFile(file)`** — Upload a file to Molnify storage.
-- `file` — a `File` object (from `<input type="file">` or drag-and-drop)
+**`uploadFile(file)`** - Upload a file to Molnify storage.
+- `file` - a `File` object (from `<input type="file">` or drag-and-drop)
 
 Returns `{url, urlFull}` where `url` is the storage URL and `urlFull` is the full-size URL (for images, includes the `__full_` variant).
 
@@ -225,8 +225,8 @@ Search a database dropdown for matching rows.
 ```
 
 **Key details:**
-- `changes` uses `variable`/`value` keys (not `cell`/`value` like calculate) — these resolve `@variable` placeholders in the dropdown's `filter` option
-- `q` is the search term — matched against the `display` column via SQL `LIKE`
+- `changes` uses `variable`/`value` keys (not `cell`/`value` like calculate) - these resolve `@variable` placeholders in the dropdown's `filter` option
+- `q` is the search term - matched against the `display` column via SQL `LIKE`
 - Returns up to `maxRows` results (default 1000)
 
 ### POST `/api/dropdown_row_data`
@@ -253,7 +253,7 @@ Fetch full row data for a selected dropdown row.
 ```
 
 **Key details:**
-- `map` is only present when the dropdown has an explicit `map` UI option — otherwise the default UI auto-maps column names to variable names
+- `map` is only present when the dropdown has an explicit `map` UI option - otherwise the default UI auto-maps column names to variable names
 - `idColumn` reflects the `idVariable` setting (default `"recordId"`)
 
 ---
@@ -365,7 +365,7 @@ recalc();
 | `IpRanges` | IP-based access control |
 | `CookieConsentPopup` | Cookie consent |
 
-**Splitting large JavaScript or CSS across cells:** Excel cells have a 32,767-character limit. Custom frontends often exceed this. Use `additionalJavaScript` and `additionalCSS` to split content across two metadata cells — the values are concatenated at load time. For example, put your core framework code in `JavaScript` and your app-specific logic in `additionalJavaScript`. The same approach works in standard (non-headless) apps when templates provide base CSS/JS and individual apps need to extend it.
+**Splitting large JavaScript or CSS across cells:** Excel cells have a 32,767-character limit. Custom frontends often exceed this. Use `additionalJavaScript` and `additionalCSS` to split content across two metadata cells - the values are concatenated at load time. For example, put your core framework code in `JavaScript` and your app-specific logic in `additionalJavaScript`. The same approach works in standard (non-headless) apps when templates provide base CSS/JS and individual apps need to extend it.
 
 **Not used in headless mode:** `JavaScriptAfterLoad`, `JavaScriptAfterCalc`, `AutoCalcEnabled`, `EnabledForCalculate`, `EnabledForSave`, `EnabledForReset`, `EnabledForPrint`, `TopBannerHidden`, `HeaderHidden`, `InputPanelSmall`, `InputPanelFixed`, `PanelsFixed`, `OutputBoxPanelHidden`, color metadata (`TopBannerColor`, `ButtonColor`, `PanelHeaderColor`, etc.), `ScenarioTerm`, `Template`, and other UI-specific settings.
 
@@ -401,7 +401,7 @@ MolnifySDK.execute('analyzeData').then(function(resp) {
 ```
 
 **Do not wrap `aiprompt` or `http` inside a `multiple` action if you need the response.**
-The `multiple` wrapper consumes the `responsevalue` field, making it inaccessible to the caller — execute the action directly instead (see the Actions Reference for `skip`/`successJavaScript`).
+The `multiple` wrapper consumes the `responsevalue` field, making it inaccessible to the caller - execute the action directly instead (see the Actions Reference for `skip`/`successJavaScript`).
 
 **Dropdown options are not accessible via MolnifySDK.**
 `MolnifySDK.getVariable()` and `MolnifySDK.getAllVariables()` return `{cell, name, value, variable, ui}` but NOT the options list for dropdowns. In headless mode, to populate dropdown UIs you must either inline the options in your JavaScript bundle, or create a hidden output that reads the options from a named range and expose it via `variable=`.

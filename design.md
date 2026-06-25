@@ -12,7 +12,7 @@ Before writing any CSS, answer three questions:
 
 1. **What is this app for, and who uses it?** A financial calculator for accountants needs calm authority. A sales demo needs energy. A factory floor tool needs density and clarity at arm's length.
 
-2. **What is the aesthetic direction?** State it in 2-3 specific words. Not "clean and modern" — that's the absence of direction. Examples: *warm industrial*, *editorial*, *soft minimal*, *dense utilitarian*, *refined corporate*, *playful bold*. Every subsequent choice must serve this direction.
+2. **What is the aesthetic direction?** State it in 2-3 specific words. Not "clean and modern" - that's the absence of direction. Examples: *warm industrial*, *editorial*, *soft minimal*, *dense utilitarian*, *refined corporate*, *playful bold*. Every subsequent choice must serve this direction.
 
 3. **What's the one thing someone will remember?** A distinctive color, an unusual font pairing, a bold layout choice. If nothing in the design is memorable, it needs a point of view.
 
@@ -37,7 +37,7 @@ AI-generated interfaces converge on the same patterns. They signal "no designer 
 ### Layout Tells
 - Everything in cards with identical padding and rounded corners
 - Identical card grid: icon + heading + text, repeated 3-6 times
-- Same spacing everywhere — no rhythm, no grouping
+- Same spacing everywhere - no rhythm, no grouping
 - Everything centered with no asymmetry
 
 ### Detail Tells
@@ -61,21 +61,21 @@ Molnify provides `HeaderFont` and `BodyFont` metadata, both loading from Google 
 - **Serif** works well for headers at larger sizes, and for apps going for editorial or refined aesthetics
 - Avoid fonts designed for print (Garamond, Bodoni) at body sizes on screen
 
-**Choose fonts with character.** The font should reflect the app's purpose and personality — not just be legible. A calculation tool for engineers feels different from a customer-facing quote builder.
+**Choose fonts with character.** The font should reflect the app's purpose and personality - not just be legible. A calculation tool for engineers feels different from a customer-facing quote builder.
 
 **Avoid the defaults.** Inter, Roboto, Open Sans, and Arial are fine fonts, but they signal that no typographic decision was made. They're the equivalent of Times New Roman in a Word document.
 
 ### Pairing Rules
 
-- **Maximum two font families** — one for headers, one for body
+- **Maximum two font families** - one for headers, one for body
 - **Pair serif + sans-serif**, not two serifs or two sans-serifs
-- **Match letter structures** for harmony, or use extreme contrast. The awkward middle ground — two fonts that are somewhat similar — always fails. Compare the lowercase `n`: humanist fonts curve organically from the stem, geometric fonts have a symmetrical arch
+- **Match letter structures** for harmony, or use extreme contrast. The awkward middle ground - two fonts that are somewhat similar - always fails. Compare the lowercase `n`: humanist fonts curve organically from the stem, geometric fonts have a symmetrical arch
 - **Same designer shortcut**: fonts by the same designer pair well. Gill Sans + Joanna (both by Eric Gill) work because they share the same design philosophy
 
 ### Body Text Settings (via CSS metadata)
 
-- Line-height 1.2–1.4em for body copy
-- Left-align body text — ragged right is more readable than justified on screen
+- Line-height 1.2-1.4em for body copy
+- Left-align body text - ragged right is more readable than justified on screen
 - Don't center body text. Centered paragraphs are harder to scan. Reserve centering for short, prominent elements like titles
 
 ---
@@ -92,7 +92,7 @@ Start from the desired mood and audience, then use color wheel relationships:
 | Energetic, active | Complementary (opposite hues) or triadic (3 evenly spaced) |
 | Sophisticated, muted | Low saturation with one strong accent |
 | Trustworthy, professional | Cool blues/greens; avoid red in analytical contexts |
-| Natural, earthy | Warm unsaturated tones — browns, greens, muted oranges |
+| Natural, earthy | Warm unsaturated tones - browns, greens, muted oranges |
 
 ### Color Principles
 
@@ -101,11 +101,11 @@ Start from the desired mood and audience, then use color wheel relationships:
 - **Hue-shifted shadows, not black.** Shadows that skew cooler and highlights that skew warmer create richer depth than pure black/white overlays.
 - **Functional colors follow convention.** Red = error/urgency. Green = success. Blue = links. Don't reverse these.
 - **Red impairs analytical thinking.** In calculation-heavy apps, avoid red as a dominant color. It overloads the prefrontal cortex and reduces rational decision-making. Reserve it for errors and urgent alerts.
-- **Test contrast.** Light text on light backgrounds and dark text on dark backgrounds are both invisible — if you lighten a default dark background, override its text color too.
+- **Test contrast.** Light text on light backgrounds and dark text on dark backgrounds are both invisible - if you lighten a default dark background, override its text color too.
 
 ### Molnify-Specific Defaults to Override
 
-Molnify's defaults (teal output boxes/buttons, dark headers) are functional but generic — override them with the color metadata properties to match your aesthetic direction. For a cohesive palette, drive everything from CSS variables in the `CSS` metadata:
+Molnify's defaults (teal output boxes/buttons, dark headers) are functional but generic - override them with the color metadata properties to match your aesthetic direction. For a cohesive palette, drive everything from CSS variables in the `CSS` metadata:
 
 ```css
 :root {
@@ -122,19 +122,19 @@ Molnify's defaults (teal output boxes/buttons, dark headers) are functional but 
 
 ## Visual Hierarchy
 
-Establish importance through five factors, applied in order of subtlety. Use the minimum number needed — don't change everything at once.
+Establish importance through five factors, applied in order of subtlety. Use the minimum number needed - don't change everything at once.
 
 ### The Hierarchy of Hierarchy
 
-1. **White space** — the most powerful and most overlooked. More space around an element signals importance. Less space between elements signals they're related. Use proportional spacing: tight within groups, generous between groups.
+1. **White space** - the most powerful and most overlooked. More space around an element signals importance. Less space between elements signals they're related. Use proportional spacing: tight within groups, generous between groups.
 
-2. **Weight** — bold for primary elements, regular for secondary. If body text is bold, increase line-height to lighten the visual texture.
+2. **Weight** - bold for primary elements, regular for secondary. If body text is bold, increase line-height to lighten the visual texture.
 
-3. **Size** — differences must be meaningful. A 2px difference (13px vs 15px) is imperceptible. Use a proportional type scale and skip steps: 9, 12, 16, 21, 28 (3:4 ratio). Jump from 12 to 21 for real contrast, not 12 to 14.
+3. **Size** - differences must be meaningful. A 2px difference (13px vs 15px) is imperceptible. Use a proportional type scale and skip steps: 9, 12, 16, 21, 28 (3:4 ratio). Jump from 12 to 21 for real contrast, not 12 to 14.
 
-4. **Color** — warm/dark colors for primary elements, cool/light for secondary. Temperature adds dimension beyond just size and weight.
+4. **Color** - warm/dark colors for primary elements, cool/light for secondary. Temperature adds dimension beyond just size and weight.
 
-5. **Ornamentation** — borders, backgrounds, icons. Use sparingly and only when the above factors are insufficient. Every decorative element competes with content.
+5. **Ornamentation** - borders, backgrounds, icons. Use sparingly and only when the above factors are insufficient. Every decorative element competes with content.
 
 ### Tables
 
@@ -150,7 +150,7 @@ Blur your eyes (or step back from the screen). The dominant element should still
 
 ### Dominance
 
-Every layout needs one dominant element — the visual anchor that draws the eye first. In a Molnify app this might be a key output metric, a chart, or the app header. Make it dominant through size, color, or surrounding white space.
+Every layout needs one dominant element - the visual anchor that draws the eye first. In a Molnify app this might be a key output metric, a chart, or the app header. Make it dominant through size, color, or surrounding white space.
 
 Without a dominant element, everything competes equally and nothing gets attention.
 
@@ -158,8 +158,8 @@ Without a dominant element, everything competes equally and nothing gets attenti
 
 Create foreground/background relationships. Not everything should sit on the same visual plane:
 - Shadows of varying intensity (not identical on every card)
-- Color intensity — bolder, more saturated elements feel closer
-- Size — larger elements advance, smaller ones recede
+- Color intensity - bolder, more saturated elements feel closer
+- Size - larger elements advance, smaller ones recede
 
 ### Direction
 
@@ -181,7 +181,7 @@ Pick a ratio and derive sizes from it:
 
 | Ratio | Character | Use for |
 |-------|-----------|---------|
-| 3:4 | Compact, practical | Most apps — type scales, spacing, card proportions |
+| 3:4 | Compact, practical | Most apps - type scales, spacing, card proportions |
 | 2:3 | Balanced, slightly more spacious | Dashboard layouts, content-heavy apps |
 | Golden (1:1.618) | Elegant, open | Premium/luxury-feel apps |
 
@@ -211,11 +211,11 @@ Before considering an app's visual design complete:
 - [ ] Aesthetic direction is stated in 2-3 words and every choice serves it
 - [ ] Primary font is not Inter, Roboto, Open Sans, or Arial
 - [ ] Color palette follows a color wheel relationship, not random picks or AI defaults
-- [ ] One element is clearly dominant — the eye knows where to go first
+- [ ] One element is clearly dominant - the eye knows where to go first
 - [ ] Layout includes variety, not identical cards repeated uniformly
 - [ ] White space creates grouping: tight within related elements, generous between sections
 - [ ] Type sizes differ by meaningful amounts (not 1-2px increments)
 - [ ] Text color has sufficient contrast against its background
-- [ ] Numbers are shown at a readable scale and precision — no excessive decimals, no 6–7 digit axis labels (scale to tSEK/MSEK/k/M with a unit in the title)
+- [ ] Numbers are shown at a readable scale and precision - no excessive decimals, no 6-7 digit axis labels (scale to tSEK/MSEK/k/M with a unit in the title)
 - [ ] The design wouldn't immediately be believed if someone said "AI made this"
 - [ ] At least one choice is distinctive enough that a generic AI wouldn't produce it

@@ -144,7 +144,7 @@ autofill.items: ="SELECT name, price FROM data_my-app_items WHERE category = '" 
 ```
 
 **Constraints:**
-- **`@variable` syntax is not supported** — unlike database dropdown `filter` options, autofill SQL does not resolve `@variable` placeholders. Use a formula to build dynamic SQL instead (see example above)
+- **`@variable` syntax is not supported** - unlike database dropdown `filter` options, autofill SQL does not resolve `@variable` placeholders. Use a formula to build dynamic SQL instead (see example above)
 - Database tables created by `DataTable.N` are named `data_<appId>_N` (e.g., `data_my-app_0`)
 - Only tables belonging to the app's ID are accessible (unless granted via `access` in DataTable). The backend validates table access before executing the query - unauthorized tables produce an error
 - If the app ID contains hyphens, you must backtick-quote the table name in SQL: `` SELECT * FROM `data_my-app_0` `` - otherwise MySQL interprets the hyphen as subtraction
@@ -173,7 +173,7 @@ There are two types. Both share these options:
 
 #### RecordDropdown (`UI: recorddropdown`)
 
-Loads rows from the app's configured record table (`RecordTableName` metadata) — uses the shared options above. When a row is selected, all table columns that match an app input variable name are automatically populated. Access control is enforced via `RecordTableAccessColumn` metadata — users only see rows where their email matches the access column value.
+Loads rows from the app's configured record table (`RecordTableName` metadata) - uses the shared options above. When a row is selected, all table columns that match an app input variable name are automatically populated. Access control is enforced via `RecordTableAccessColumn` metadata - users only see rows where their email matches the access column value.
 
 ```
 UI: recorddropdown;display=customerName&' ('&city&')'
@@ -203,7 +203,7 @@ The `display` option supports Excel-style `&` concatenation, which is converted 
 
 #### Filter with @variables
 
-The `filter` option supports `@variableName` placeholders that are resolved from current input values (parameterized, not interpolated — safe from SQL injection):
+The `filter` option supports `@variableName` placeholders that are resolved from current input values (parameterized, not interpolated - safe from SQL injection):
 ```
 filter=status=@selectedStatus AND region=@selectedRegion
 ```

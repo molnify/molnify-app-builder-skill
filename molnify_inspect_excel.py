@@ -18,6 +18,24 @@ from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
 
 
+MAX_CELL_VALUE_CHARS = 200
+
+
+def cap_value(v):
+    """Cap a long string cell value to a preview to keep the dump small.
+
+    Metadata-sheet cells routinely hold the app's full CSS / JavaScript (tens of KB
+    each) — content the builder already wrote. Echoing it back verbatim bloats the
+    tool output for no benefit and pushes legitimate trailing cells past the stream
+    cap. Long strings become a preview plus a length marker; everything structural
+    (address, fill, formula, short values) is preserved. The full value is still
+    used for the internal dependency analysis.
+    """
+    if isinstance(v, str) and len(v) > MAX_CELL_VALUE_CHARS:
+        return {'preview': v[:MAX_CELL_VALUE_CHARS], 'len': len(v), 'truncated': True}
+    return v
+
+
 def get_cell_color(cell):
     """Return hex color string if cell has a solid fill, else None."""
     fill = cell.fill
@@ -143,7 +161,7 @@ def inspect_workbook(filepath):
 
                 cell_entry = {
                     'coord': coord,
-                    'value': cell.value,
+                    'value': cap_value(cell.value),
                 }
 
                 color = get_cell_color(cell)

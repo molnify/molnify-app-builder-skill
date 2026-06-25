@@ -87,7 +87,7 @@ app.add_metadata("CSS",
 app.add_input("View", "All", ui="dropdown;variable=viewMode")
 app.add_input("Year", "2025", ui="dropdown")
 
-# Summary outputs — units baked into the formula; prefix/postfix are input-only and do nothing here.
+# Summary outputs - units baked into the formula; prefix/postfix are input-only and do nothing here.
 app.add_output("Total Revenue", '="$"&TEXT(ROUND(Model!B2,0),"#,##0")', ui="icon=fa-usd")
 app.add_output("Growth", '=TEXT(Model!B3,"0.0")&"%"')
 
