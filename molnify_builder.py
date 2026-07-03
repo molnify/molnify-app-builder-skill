@@ -61,6 +61,26 @@ _CELL_ADDR_RE = re.compile(
     r"([A-Z]{1,3})(\d+)$"                    # column + row
 )
 
+# openpyxl silently truncates any cell string over 32,767 chars the moment it is
+# assigned to a cell (not at save), destroying the tail - commonly the end of large
+# JS/CSS metadata in headless apps. The guard must therefore run on the raw string
+# BEFORE it reaches a cell; once assigned, cell.value is already truncated and no
+# check can recover it. Exactly 32,767 is legal, so the guard is strictly '>'.
+# (Raw-openpyxl callers that assign cells directly bypass this - molnify_validate.py
+# flags a cell sitting at exactly 32,767 as the post-hoc backstop for that path.)
+_CELL_CHAR_LIMIT = 32767
+
+
+def _check_cell_length(value, address=''):
+    """Raise if a non-formula string value would be truncated on assignment."""
+    if (isinstance(value, str) and not value.startswith('=')
+            and len(value) > _CELL_CHAR_LIMIT):
+        where = f" ({address})" if address else ''
+        raise ValueError(
+            f"Cell value{where} is {len(value):,} chars, over Excel's "
+            f"{_CELL_CHAR_LIMIT:,} limit - it would be silently truncated. "
+            f"Split the content across multiple cells.")
+
 
 def _has_section_break(ui):
     """Check if a UI string starts a new tab or divider section."""
@@ -373,6 +393,7 @@ class AppBuilder:
             key: Metadata key (e.g. "EnabledForSave").
             value: Metadata value (e.g. "TRUE").
         """
+        _check_cell_length(value, f"metadata:{key}")
         self._metadata.append((key, value))
 
     def add_model_sheet(self, name):
@@ -421,6 +442,7 @@ class AppBuilder:
         m = _CELL_ADDR_RE.match(address)
         if not m:
             raise ValueError(f"Cannot parse cell address: '{address}'")
+        _check_cell_length(value, address)
         sheet = m.group(1) or m.group(2) or 'App'
         col_str = m.group(3)
         row_num = int(m.group(4))

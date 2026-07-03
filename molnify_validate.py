@@ -467,12 +467,17 @@ def validate_workbook(filepath):
                     app_id = str(next_cell.value).strip()
     if not has_id:
         error("No 'ID' metadata found. Set an ID for stable URLs and database table access.")
-    elif not re.fullmatch(r'[A-Za-z0-9_-]+', app_id):
-        invalid = sorted({c for c in app_id if not re.match(r'[A-Za-z0-9_-]', c)})
-        error(f"App ID '{app_id}' contains invalid character(s): "
-              f"{', '.join(repr(c) for c in invalid)}. IDs may only contain letters "
-              f"(a-z, A-Z), digits (0-9), hyphens (-) and underscores (_). "
-              f"Spaces and other characters break the app URL and publishing.")
+    elif not re.fullmatch(r'[a-z0-9_-]+', app_id):
+        invalid = sorted({c for c in app_id if not re.match(r'[a-z0-9_-]', c)})
+        if any(c.isupper() for c in app_id):
+            error(f"App ID '{app_id}' has uppercase letter(s): "
+                  f"{', '.join(repr(c) for c in invalid)}. IDs must be lowercase - the "
+                  f"backend lowercases it, so the table name (data_<id>_0) and lab/prod "
+                  f"deployment no longer match the ID the app references.")
+        else:
+            error(f"App ID '{app_id}' has invalid character(s): "
+                  f"{', '.join(repr(c) for c in invalid)}. Use only lowercase letters, "
+                  f"digits, hyphens (-) and underscores (_).")
 
     # --- Check 3: ParseAllSheets ---
     if len(sheets_with_colors) > 1:

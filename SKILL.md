@@ -3,7 +3,7 @@ name: molnify-app-builder
 description: "Build, convert, validate, and style Molnify apps: spreadsheet-driven web applications where Excel or Google Sheets formulas drive the logic and colored cells define inputs, outputs, charts, and actions. Use when creating a Molnify app from scratch, converting an existing spreadsheet into one, validating or styling an app, or answering questions about how Molnify apps work."
 license: Apache-2.0
 metadata:
-  version: 1.0.6
+  version: 1.0.7
 ---
 
 # Molnify App Development Guide
