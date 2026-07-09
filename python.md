@@ -49,135 +49,7 @@ Input `#00B050`, Output `#FF0000`, Chart/Table `#0070C0`, Action `#FFFF00`, Meta
 
 **Important:** The backend uses exact byte matching with no tolerance. Colors not in the tables above will be ignored, even if they look similar.
 
-## Python Examples
-
-### Reading a Molnify App
-
-```python
-from openpyxl import load_workbook
-from openpyxl.styles import PatternFill
-
-# All colors accepted by the Molnify backend (exact matching, no tolerance).
-# First entry per type is the recommended color for new apps.
-ACCEPTED_COLORS = {
-    'input':    ['00B050', '008000', '00FF00', '34A853'],
-    'output':   ['FF0000', 'EE0000'],
-    'chart':    ['0070C0', '3366FF', '0000FF'],
-    'action':   ['FFFF00'],
-    'metadata': ['7030A0', '660066', '9900FF', 'FF00FF'],
-}
-
-# Flat lookup: hex -> cell type
-_COLOR_TO_TYPE = {h: ct for ct, hexes in ACCEPTED_COLORS.items() for h in hexes}
-
-def get_cell_type(cell):
-    """Determine cell type from fill color (exact match)."""
-    fill = cell.fill
-    if fill.fill_type != 'solid':
-        return None
-
-    color = fill.fgColor
-    if color and color.type == 'rgb' and color.rgb:
-        rgb_hex = color.rgb[-6:].upper()
-        return _COLOR_TO_TYPE.get(rgb_hex)
-    return None
-
-def analyze_molnify_app(filepath):
-    """Analyze a Molnify Excel app and extract components."""
-    wb = load_workbook(filepath)
-
-    app = {
-        'inputs': [],
-        'outputs': [],
-        'actions': [],
-        'metadata': []
-    }
-
-    for sheet in wb.worksheets:
-        for row in sheet.iter_rows():
-            for cell in row:
-                cell_type = get_cell_type(cell)
-                if cell_type:
-                    app[cell_type + 's' if cell_type != 'metadata' else 'metadata'].append({
-                        'cell': f"{sheet.title}!{cell.coordinate}",
-                        'value': cell.value,
-                        'comment': cell.comment.text if cell.comment else None
-                    })
-
-    return app
-
-# Usage
-app = analyze_molnify_app('my_app.xlsx')
-print(f"Found {len(app['inputs'])} inputs")
-print(f"Found {len(app['outputs'])} outputs")
-print(f"Found {len(app['actions'])} action cells")
-print(f"Found {len(app['metadata'])} metadata cells")
-```
-
-### Creating a New Input Cell
-
-```python
-from openpyxl import load_workbook
-from openpyxl.styles import PatternFill
-from openpyxl.comments import Comment
-
-def add_input(wb, sheet_name, cell_ref, name, default_value, ui_options=None, tooltip=None):
-    """Add a new input cell to a Molnify app."""
-    sheet = wb[sheet_name]
-    cell = sheet[cell_ref]
-
-    # Set the input color (green)
-    green_fill = PatternFill(start_color='00B050', end_color='00B050', fill_type='solid')
-    cell.fill = green_fill
-
-    # Set the value
-    cell.value = default_value
-
-    # Add tooltip as comment (this becomes the 'details' field)
-    if tooltip:
-        cell.comment = Comment(tooltip, 'Molnify')
-
-    # The name cell is typically to the left
-    name_cell = sheet.cell(row=cell.row, column=cell.column - 1)
-    name_cell.value = name
-
-    # UI options go in a specific location or can be stored in cell metadata
-    # This depends on your app structure
-
-    return cell
-
-# Usage
-wb = load_workbook('my_app.xlsx')
-add_input(wb, 'Input', 'C5', 'User Age', 25, tooltip='Enter your age in years')
-wb.save('my_app.xlsx')
-```
-
-### Modifying Metadata
-
-```python
-from openpyxl import load_workbook
-
-def set_metadata(wb, key, value, metadata_sheet='Metadata'):
-    """Set a metadata value in a Molnify app."""
-    sheet = wb[metadata_sheet]
-
-    # Find the metadata key
-    for row in sheet.iter_rows():
-        for cell in row:
-            if cell.value == key:
-                # Value is typically in the next column
-                value_cell = sheet.cell(row=cell.row, column=cell.column + 1)
-                value_cell.value = value
-                return True
-
-    return False
-
-# Usage
-wb = load_workbook('my_app.xlsx')
-set_metadata(wb, 'Name', 'My Updated App')
-set_metadata(wb, 'EnabledForSave', 'TRUE')
-wb.save('my_app.xlsx')
-```
+To read an app's structure programmatically, use `molnify-inspect-excel` rather than hand-rolling openpyxl color parsing. When writing cells with openpyxl, apply the colors above via `PatternFill(start_color='00B050', end_color='00B050', fill_type='solid')`; a cell comment becomes the input's `details` tooltip.
 
 ## Working with Formulas
 
@@ -201,17 +73,19 @@ openpyxl writes string cells as **inline strings** (`t="inlineStr"` with `<is><t
 
 **If you use `AppBuilder`**, this is handled automatically - `AppBuilder.save()` converts inline strings to shared strings as a post-processing step.
 
-**If you use raw openpyxl**, you must call `_convert_inline_strings()` from `molnify_builder.py` after saving:
+**If you use raw openpyxl, you must call `_convert_inline_strings()` from `molnify_builder.py` after *every* `save()`.** This applies whether you build a new workbook with `Workbook()` **or edit an existing file with `load_workbook()`** - openpyxl rewrites string cells as inline strings on save regardless of how they were stored on disk, so re-saving an already-converted (shared-string) file re-introduces the problem.
 
 ```python
-from openpyxl import Workbook
+from openpyxl import load_workbook
 from molnify_builder import _convert_inline_strings
 
-wb = Workbook()
-# ... build your workbook ...
+wb = load_workbook('my-app.xlsx')
+# ... edit cells, add a dropdown, etc. ...
 wb.save('my-app.xlsx')
-_convert_inline_strings('my-app.xlsx')  # Required for Molnify compatibility
+_convert_inline_strings('my-app.xlsx')  # Required after EVERY openpyxl save
 ```
+
+This bites hardest with dropdowns: the option values written into the named range become inline strings, so the dropdown renders but the selected value never propagates through formulas.
 
 openpyxl also writes empty `<v/>` elements on formula cells, which Molnify may interpret as "already evaluated to empty." The conversion function removes these as well.
 

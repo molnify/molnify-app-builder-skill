@@ -62,13 +62,6 @@ Embed Molnify apps within other Molnify apps:
 - Use `successHTMLElementContent` to communicate between apps
 - JavaScript can access variables across iframes on same domain
 
-### Table Styling with CSS
-Use the `CSS` metadata property for flexible table styling:
-```css
-.out-table thead td { background-color: #333; color: white; font-weight: bold; }
-.out-table tbody td { border: 1px solid #ddd; }
-```
-
 ---
 
 ## Limitations & Workarounds
@@ -263,14 +256,7 @@ JavaScript: function handleAgeChange(el) { var v = getValueForVariable('age'); i
 - Check that data format matches expected structure (title row, then data rows)
 
 ### JavaScript can't find table elements
-Molnify tables render with `<td>` elements in `<thead>` (not `<th>`). When writing JS to interact with table cells:
-```javascript
-// Wrong - tables don't use <th>
-$('.out-table thead th')
-
-// Correct
-$('.out-table thead td')
-```
+Molnify tables render with `<td>` elements in `<thead>` (not `<th>`) - target `$('.out-table thead td')`. Full table DOM is in `styling.md`.
 
 ### Validation not working
 - Validation rules are case-sensitive

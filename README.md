@@ -56,6 +56,23 @@ Download a release `.zip` (below) and upload it as a skill in Settings → Capab
 Download or clone the repo and give the assistant `SKILL.md` as context; it links to
 the companion guides as it needs them.
 
+## Updating
+
+Installs are **version-pinned**: the skills CLI records the exact release it downloaded,
+and `npx skills update` does not check skills installed from a discovery manifest (it
+lists them under "cannot be checked automatically"). To update, re-run the install
+command - the manifest always points at the latest release:
+
+```bash
+npx skills add https://app.molnify.com
+```
+
+If you cloned the repo instead, run `git pull` in the skill directory. On Claude.ai,
+download the latest release `.zip` and upload it again.
+
+Your installed version is in the `VERSION` file (and `SKILL.md` frontmatter); compare
+with the [latest release](https://github.com/molnify/molnify-app-builder-skill/releases/latest).
+
 ## Pin a version
 
 Releases follow [semantic versioning](https://semver.org). Pin to a tag for

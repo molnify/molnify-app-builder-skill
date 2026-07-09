@@ -3,7 +3,7 @@ name: molnify-app-builder
 description: "Build, convert, validate, and style Molnify apps: spreadsheet-driven web applications where Excel or Google Sheets formulas drive the logic and colored cells define inputs, outputs, charts, and actions. Use when creating a Molnify app from scratch, converting an existing spreadsheet into one, validating or styling an app, or answering questions about how Molnify apps work."
 license: Apache-2.0
 metadata:
-  version: 1.0.7
+  version: 1.0.10
 ---
 
 # Molnify App Development Guide
@@ -700,7 +700,7 @@ Metadata cells (purple) configure application-wide settings.
 | `CSS` | Complete custom CSS |
 | `additionalCSS` | CSS appended after the main `CSS` value. Use when a template provides base CSS and you want to extend it without replacing it. Also useful when CSS exceeds a single cell's 32,767-character limit - split across `CSS` and `additionalCSS`. |
 | `TopBannerColor` | Top banner color. Paints the **top banner** (`#header`, the fixed full-width bar above the app), via `#molnifyAppBody .container-fluid`. This is a different element from `#appHeaderRow` (the app title bar inside `#content`) - it does not color that. |
-| `HeaderTextColor` | Header text color (the banner title, `#molnifyAppBody h1`). The banner has a dark background by default, so light text works. If you set `TopBannerColor` to a light color, also set `HeaderTextColor` to a dark value, or the text becomes invisible. |
+| `HeaderTextColor` | Colors the **app title** at the top of the content area (`h1#appHeader`/`#pAppTitle`, via `#molnifyAppBody h1`) - not the top banner (a logo, no text). The title sits on the page background, light by default, so keep it **dark**; only go light for a dark-background app. |
 | `PanelHeaderColor` | Panel header color |
 | `ButtonColor` | Default button color |
 | `ButtonActiveColor` | Selected button color |
@@ -838,3 +838,7 @@ Validation is specified in the validation property of inputs.
 ### Custom Validation
 Use `var=variableName` to store validation dropdown options in a JavaScript variable.
 
+
+---
+
+*This is v1.0.10 of the skill, published 2026-07-09. Installed copies are version-pinned; to update to the latest release, re-run `npx skills add https://app.molnify.com` (see `README.md`).*

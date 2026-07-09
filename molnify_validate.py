@@ -1013,26 +1013,6 @@ def validate_workbook(filepath):
                         f"contrast (below WCAG 3:1). Use a darker background or "
                         f"override the text color via CSS.")
 
-    # Header banner text contrast.
-    if 'headertextcolor' in meta_values and 'topbannercolor' in meta_values:
-        # Both set: check the explicit text color against the banner background.
-        text_val, text_ref = meta_values['headertextcolor']
-        banner_val, _ = meta_values['topbannercolor']
-        ratio = _contrast_ratio(text_val, banner_val)
-        if ratio < 3.0:
-            warning(f"{text_ref}: HeaderTextColor '{text_val}' on TopBannerColor "
-                    f"'{banner_val}' has contrast ratio {ratio:.1f}:1 (below 3:1). "
-                    f"Text may be unreadable.")
-    elif 'topbannercolor' in meta_values:
-        # TopBannerColor set without HeaderTextColor: the default header text is
-        # light, so a light banner makes the app title invisible.
-        banner_val, banner_ref = meta_values['topbannercolor']
-        if _white_unreadable_on(banner_val):
-            warning(f"{banner_ref}: TopBannerColor is set to '{banner_val}' without "
-                    f"HeaderTextColor. The header text (app title) is light by default - "
-                    f"on this background it has insufficient contrast (below WCAG 3:1). "
-                    f"Set HeaderTextColor to a dark value, or use a darker TopBannerColor.")
-
     # --- Check 19: Variable name uniqueness ---
     defined_variables = {}  # variable_name -> list of (sheet, coord)
     for (sheet, coord), ctype in colored_cells.items():

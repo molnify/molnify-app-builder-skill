@@ -9,24 +9,11 @@ See `design.md` for visual design principles - typography, color, hierarchy, and
 
 These blocks appear in most examples below. Copy what you need as a starting point.
 
-**Output card grid override** - replaces Bootstrap's `.row` flex with CSS Grid inside the results panel:
+**Output card grid override** - the core `#outputboxpanel` CSS Grid override is in `styling.md` under "Overriding Bootstrap inside panels". The recipes below combine it with this panel-chrome removal so the cards sit directly on the page:
 ```css
 #outputboxpanel { background: transparent; border: none; box-shadow: none; overflow: visible; }
 #outputboxpanel .panel-heading { display: none; }
 #outputboxpanel .panel-body { padding: 0; }
-#outputboxpanel .row {
-  display: grid !important;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin: 0;
-}
-#outputboxpanel .row::before, #outputboxpanel .row::after { display: none; }
-#outputboxpanel [class*="col-"] {
-  width: auto;
-  max-width: none;
-  padding: 0;
-}
-#outputboxpanel .widget { margin-bottom: 0; }
 .widget-stats { border-radius: 10px; }
 ```
 
@@ -42,13 +29,7 @@ These blocks appear in most examples below. Copy what you need as a starting poi
 #inputpanel .panel-title { color: inherit; }
 ```
 
-**Strip Bootstrap grid classes** (JS) - the universal escape pattern from `styling.md`:
-```javascript
-$('#leftColumn, #rightColumn').removeClass(function(i, c) {
-  return (c.match(/\bcol-\S+/g) || []).join(' ');
-});
-$('#boxRow').removeClass('row');
-```
+**Strip Bootstrap grid classes** (JS) - use the universal escape pattern JS from `styling.md` ("Breaking Out of the Bootstrap 3 Grid"). Recipes below reference it as "Strip BS3 grid".
 
 **Stack columns full-width** (JS) - drop the default 50/50 split so the input column spans full width on top and the output/chart column spans full width below, and hide the input-panel heading. Inputs can be arranged horizontally by CSS, but that is not done here:
 ```javascript
@@ -86,7 +67,7 @@ Re-theme by editing the `:root` variables (override example below). Tokens live 
 
 body, #page-container { background: var(--m-bg); color: var(--m-text); }
 
-/* App title (dark-on-dark by default) + top banner (light by default) */
+/* App title (#pAppTitle) defaults to gray - force it light for this dark page + top banner */
 #pAppTitle { color: var(--m-text-strong) !important; }
 #header { background: var(--m-bg) !important; border-bottom: 1px solid var(--m-control); }
 
@@ -341,7 +322,8 @@ body { background: #f0f2f5; }
   gap: 16px;
   margin: 0;
 }
-/* Apply remaining output card overrides and clean panel styling from above */
+/* Apply the rest of the grid override from styling.md (::before/::after, [class*="col-"], .widget)
+   plus the chrome removal and clean panel styling from above */
 
 /* Light input panel heading - use .panel to beat Molnify's PanelHeaderColor specificity */
 #inputpanel.panel .panel-heading { background-color: transparent !important; color: #333 !important; border-bottom: 1px solid #e0e0e0; }
@@ -356,11 +338,7 @@ body { background: #f0f2f5; }
 
 ## CSS Grid Layouts
 
-These use the universal escape pattern (strip BS3 grid, apply CSS Grid on `#boxRow`). All require the "Strip Bootstrap grid classes" JS from the top of this file.
-
-**Important when using CSS Grid:**
-- Charts/tables need explicit `rightColumn` or `leftColumn` UI options - default panel alternation breaks in Grid layouts.
-- Call `calculateButton()` at the end of `JavaScriptAfterLoad` - NVD3 charts compute dimensions on render and need a redraw after DOM restructuring.
+These use the universal escape pattern (strip BS3 grid, apply CSS Grid on `#boxRow`). All require the "Strip BS3 grid" JS, and the "Important when using CSS Grid" checklist in `styling.md` applies (explicit `rightColumn`/`leftColumn` on charts, final `calculateButton()`, don't starve the input column).
 
 ### Three-Column Layout
 
