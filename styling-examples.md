@@ -244,7 +244,7 @@ h1#appHeader { font-size: 32px; color: #2a2a2a; font-weight: 400; letter-spacing
   box-shadow: none;
 }
 #inputpanel .form-control:focus { border-bottom-color: #8b7355; box-shadow: none; }
-.btn-primary, .btn-success { background: #8b7355; border: none; border-radius: 4px; }
+.btn-primary, #molnifyAppBody .btn-success { background: #8b7355; border: none; border-radius: 4px; }
 
 /* Output metrics - large typography, no cards */
 #outputboxpanel .row { display: flex !important; flex-direction: column; }

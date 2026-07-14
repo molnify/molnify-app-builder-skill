@@ -96,8 +96,7 @@ KNOWN_ACTION_TYPES = {
     'aiprompt', 'resetinputs',
 }
 
-# Required fields per action type (used by Check 21).
-# Each value is a list of (field_name, severity) tuples.
+# Required fields per action type.
 ACTION_REQUIRED_FIELDS = {
     'email': ['to'],
     'http': ['url'],
@@ -232,8 +231,15 @@ KNOWN_CHART_TYPES = {
     'scatterchart', 'geochart', 'linebarchart', 'table',
 }
 
-# Chart key=value UI options (used in both _is_known_ui_token and Check 9)
+# Chart key=value UI options
 KNOWN_CHART_KEYS = {'xaxis', 'yaxis', 'yaxisticks', 'axisdecimals', 'atleast', 'map'}
+
+# Chart bare-token UI options
+KNOWN_CHART_BARE_OPTIONS = {
+    'stacked', 'horizontal', 'showvalues', 'nogridlines', 'steps',
+    'staggerlabels', 'nowordwrap', 'nocontrols', 'nogroupedstackedcontrols',
+    'atleastsync', 'centerzero', 'hidemaxmin',
+}
 
 
 # ---------------------------------------------------------------------------
@@ -369,27 +375,55 @@ def _is_known_ui_token(token_lower):
         # seriesN.property pattern
         if re.match(r'^series\d+\.\w+$', key):
             return True
-        return key in KNOWN_UI_KEYS
-    # Bare token
-    if token_lower in KNOWN_UI_BARE_OPTIONS:
-        return True
-    if token_lower in KNOWN_UI_AUTOFILL:
-        return True
-    # jsOnChange is case-insensitive match
-    if token_lower.startswith('jsonchange'):
-        return True
-    # Chart options that are bare tokens
-    chart_bare = {
-        'stacked', 'horizontal', 'showvalues', 'nogridlines', 'steps',
-        'staggerlabels', 'nowordwrap', 'nocontrols', 'nogroupedstackedcontrols',
-        'atleastsync', 'centerzero', 'hidemaxmin',
-    }
-    if token_lower in chart_bare:
-        return True
-    # Chart key=value options
-    if '=' not in token_lower and token_lower in KNOWN_CHART_KEYS:
-        return True
-    return False
+        return key in KNOWN_UI_KEYS or key in KNOWN_CHART_KEYS
+    return (token_lower in KNOWN_UI_BARE_OPTIONS
+            or token_lower in KNOWN_UI_AUTOFILL
+            or token_lower in KNOWN_CHART_BARE_OPTIONS
+            or token_lower.startswith('jsonchange'))
+
+
+def _iter_metadata_pairs(wb, colored_cells):
+    """Yield (sheet, coord, key_str, val_cell) for each purple metadata key cell.
+
+    Skips the value half of a pair (a purple cell whose left neighbor is also
+    purple). val_cell is the cell one column to the right of the key.
+    """
+    for (sheet, coord), ctype in colored_cells.items():
+        if ctype != 'metadata':
+            continue
+        ws = wb[sheet]
+        cell = ws[coord]
+        if cell.value is None:
+            continue
+        if cell.column >= 2:
+            left_cell = ws.cell(row=cell.row, column=cell.column - 1)
+            left_color = get_cell_color_hex(left_cell)
+            if left_color and color_matches_molnify(left_color) == 'metadata':
+                continue
+        val_cell = ws.cell(row=cell.row, column=cell.column + 1)
+        yield sheet, coord, str(cell.value).strip(), val_cell
+
+
+def _iter_ui_strings(wb, colored_cells, types=('input', 'output')):
+    """Yield (sheet, coord, ui_cell, ui_str, tokens) for each colored cell whose
+    UI cell (one column right) holds a literal option string.
+
+    Skips empty and formula-valued UI cells. tokens is the ;-split, stripped,
+    non-empty token list.
+    """
+    for (sheet, coord), ctype in colored_cells.items():
+        if ctype not in types:
+            continue
+        ws = wb[sheet]
+        cell = ws[coord]
+        ui_cell = ws.cell(row=cell.row, column=cell.column + 1)
+        if ui_cell.value is None:
+            continue
+        ui_str = str(ui_cell.value).strip()
+        if ui_str.startswith('='):
+            continue
+        tokens = [t.strip() for t in ui_str.split(';') if t.strip()]
+        yield sheet, coord, ui_cell, ui_str, tokens
 
 
 # ---------------------------------------------------------------------------
@@ -436,7 +470,7 @@ def validate_workbook(filepath):
                         green_cells[(sheet_name, cell.coordinate)] = cell.value
                 elif is_near_molnify_color(hex_color):
                     warning(f"{sheet_name}!{cell.coordinate}: fill color #{hex_color} is close to "
-                            f"a Molnify color but may not be recognised. Use exact standard colors.")
+                            f"a Molnify color but may not be recognized. Use exact standard colors.")
                 # Non-Molnify colors on active sheets are fine (uncolored/decorative)
 
     # --- Check 1: Metadata on first sheet ---
@@ -479,6 +513,16 @@ def validate_workbook(filepath):
                   f"{', '.join(repr(c) for c in invalid)}. Use only lowercase letters, "
                   f"digits, hyphens (-) and underscores (_).")
 
+    # --- Check 2b: At least one input or output cell ---
+    # Molnify treats a workbook with no input (green) or output (red) cells as
+    # invalid, even if the app is driven entirely by JavaScript actions.
+    has_input = any(ctype == 'input' for ctype in colored_cells.values())
+    has_output = any(ctype == 'output' for ctype in colored_cells.values())
+    if not has_input and not has_output:
+        error("No input (green) or output (red) cells found. Molnify requires at least "
+              "one input or output cell; a workbook with none is treated as invalid. "
+              "Add an input or output cell, even for JavaScript-driven apps.")
+
     # --- Check 3: ParseAllSheets ---
     if len(sheets_with_colors) > 1:
         has_parse_all = False
@@ -502,7 +546,7 @@ def validate_workbook(filepath):
         if sheet_name not in sheets_with_colors and sheet_name != first_sheet:
             warning(f"Sheet '{sheet_name}' has no Molnify colored cells and no molnifyIgnore in A1. "
                     f"If this is a model/data sheet, add 'molnifyIgnore' in cell A1 to prevent "
-                    f"accidental colour interpretation.")
+                    f"accidental color interpretation.")
 
     # --- Check 5: Green cells with formulas referencing other green cells ---
     for (sheet, coord), value in green_cells.items():
@@ -581,7 +625,7 @@ def validate_workbook(filepath):
                         f"no room for a header row above.")
                 continue
 
-            # Check that column headers above blue data are NOT blue
+            # Column headers above blue data must not be blue themselves
             for col in sorted(cols):
                 header_cell = ws.cell(row=header_row, column=col)
                 header_color = get_cell_color_hex(header_cell)
@@ -592,57 +636,23 @@ def validate_workbook(filepath):
                     break  # one warning per block is enough
 
     # --- Check 8: Metadata key validity ---
-    for (sheet, coord), ctype in colored_cells.items():
-        if ctype != 'metadata':
-            continue
-        ws = wb[sheet]
-        cell = ws[coord]
-        if cell.value is None:
-            continue
-        key_str = str(cell.value).strip()
-        # Skip value cells (right side of a pair) - heuristic: check if
-        # the cell to the left is also purple metadata
-        if cell.column >= 2:
-            left_cell = ws.cell(row=cell.row, column=cell.column - 1)
-            left_color = get_cell_color_hex(left_cell)
-            if left_color and color_matches_molnify(left_color) == 'metadata':
-                continue  # This is a value cell, skip
-        key_lower = key_str.lower()
-        if not _is_known_metadata_key(key_lower):
-            warning(f"{sheet}!{coord}: unrecognised metadata key '{key_str}'. "
+    for sheet, coord, key_str, _val_cell in _iter_metadata_pairs(wb, colored_cells):
+        if not _is_known_metadata_key(key_str.lower()):
+            warning(f"{sheet}!{coord}: unrecognized metadata key '{key_str}'. "
                     f"Check for typos - this key will be ignored by the backend.")
 
     # --- Check 9: UI option syntax ---
-    for (sheet, coord), ctype in colored_cells.items():
-        if ctype not in ('input', 'output'):
-            continue
-        ws = wb[sheet]
-        cell = ws[coord]
-        # UI cell is one column to the right
-        ui_cell = ws.cell(row=cell.row, column=cell.column + 1)
-        if ui_cell.value is None:
-            continue
-        ui_str = str(ui_cell.value).strip()
-        # Skip formula-based UI cells
-        if ui_str.startswith('='):
-            continue
-        tokens = [t.strip() for t in ui_str.split(';') if t.strip()]
+    for sheet, coord, ui_cell, ui_str, tokens in _iter_ui_strings(wb, colored_cells):
         for token in tokens:
             token_lower = token.lower()
+            if _is_known_ui_token(token_lower):
+                continue
             if '=' in token_lower:
-                key = token_lower.split('=', 1)[0]
-                # seriesN.property pattern
-                if re.match(r'^series\d+\.\w+$', key):
-                    continue
-                if key not in KNOWN_UI_KEYS:
-                    # Check chart options with = sign
-                    if key not in KNOWN_CHART_KEYS:
-                        warning(f"{sheet}!{ui_cell.coordinate}: unknown UI option key "
-                                f"'{token.split('=', 1)[0]}' in '{ui_str}'.")
+                warning(f"{sheet}!{ui_cell.coordinate}: unknown UI option key "
+                        f"'{token.split('=', 1)[0]}' in '{ui_str}'.")
             else:
-                if not _is_known_ui_token(token_lower):
-                    warning(f"{sheet}!{ui_cell.coordinate}: unknown UI option "
-                            f"'{token}' in '{ui_str}'.")
+                warning(f"{sheet}!{ui_cell.coordinate}: unknown UI option "
+                        f"'{token}' in '{ui_str}'.")
 
     # --- Check 10: Chart type validity ---
     # Uses chart_blocks from Check 7. For each block, find the UI cell in the
@@ -679,7 +689,7 @@ def validate_workbook(filepath):
         first_token = ui_str.split(';')[0].strip().lower()
         if first_token and first_token not in KNOWN_CHART_TYPES:
             warning(f"{sheet}!{ui_cell.coordinate}: "
-                    f"'{ui_str.split(';')[0].strip()}' is not a recognised "
+                    f"'{ui_str.split(';')[0].strip()}' is not a recognized "
                     f"chart type. Known types: "
                     f"{', '.join(sorted(KNOWN_CHART_TYPES))}.")
 
@@ -824,19 +834,8 @@ def validate_workbook(filepath):
                                 f"dynamic SQL instead.")
 
     # --- Check 14: Non-ASCII variable names ---
-    for (sheet, coord), ctype in colored_cells.items():
-        if ctype not in ('input', 'output'):
-            continue
-        ws = wb[sheet]
-        cell = ws[coord]
-        ui_cell = ws.cell(row=cell.row, column=cell.column + 1)
-        if ui_cell.value is None:
-            continue
-        ui_str = str(ui_cell.value).strip()
-        if ui_str.startswith('='):
-            continue
-        for token in ui_str.split(';'):
-            token = token.strip()
+    for sheet, coord, ui_cell, ui_str, tokens in _iter_ui_strings(wb, colored_cells):
+        for token in tokens:
             if token.lower().startswith('variable='):
                 var_name = token.split('=', 1)[1]
                 if var_name and not var_name.isascii():
@@ -863,25 +862,9 @@ def validate_workbook(filepath):
              f"SQL (autofill queries, downloadquery actions).")
 
     # --- Check 17: DataTable.N schema validation ---
-    for (sheet, coord), ctype in colored_cells.items():
-        if ctype != 'metadata':
+    for sheet, coord, key_str, val_cell in _iter_metadata_pairs(wb, colored_cells):
+        if not key_str.lower().startswith('datatable.'):
             continue
-        ws = wb[sheet]
-        cell = ws[coord]
-        if cell.value is None:
-            continue
-        key_str = str(cell.value).strip()
-        key_lower = key_str.lower()
-        if not key_lower.startswith('datatable.'):
-            continue
-        # Skip value cells (right side of pair)
-        if cell.column >= 2:
-            left_cell = ws.cell(row=cell.row, column=cell.column - 1)
-            left_color = get_cell_color_hex(left_cell)
-            if left_color and color_matches_molnify(left_color) == 'metadata':
-                continue
-        # Get the value cell
-        val_cell = ws.cell(row=cell.row, column=cell.column + 1)
         if val_cell.value is None:
             continue
         val_str = str(val_cell.value).strip()
@@ -931,7 +914,7 @@ def validate_workbook(filepath):
                 # Check valid type
                 if col_type not in VALID_COLUMN_TYPES:
                     warning(f"{sheet}!{val_cell.coordinate}: {key_str} column "
-                            f"'{col_name}' has unrecognised type '{col_type}'. "
+                            f"'{col_name}' has unrecognized type '{col_type}'. "
                             f"Valid types: VARCHAR, TEXT, INT, DECIMAL, BOOL, "
                             f"DATETIME, TIMESTAMP, JSON, etc.")
                 # Check DATETIME/TIMESTAMP default requirement
@@ -948,23 +931,9 @@ def validate_workbook(filepath):
     # --- Check 18: Contrast issues in styling metadata ---
     # Collect metadata key-value pairs for contrast checking
     meta_values = {}
-    for (sheet, coord), ctype in colored_cells.items():
-        if ctype != 'metadata':
-            continue
-        ws = wb[sheet]
-        cell = ws[coord]
-        if cell.value is None:
-            continue
-        # Skip value cells (right side of pair)
-        if cell.column >= 2:
-            left_cell = ws.cell(row=cell.row, column=cell.column - 1)
-            left_color = get_cell_color_hex(left_cell)
-            if left_color and color_matches_molnify(left_color) == 'metadata':
-                continue
-        key_lower = str(cell.value).strip().lower()
-        val_cell = ws.cell(row=cell.row, column=cell.column + 1)
+    for sheet, coord, key_str, val_cell in _iter_metadata_pairs(wb, colored_cells):
         if val_cell.value is not None:
-            meta_values[key_lower] = (str(val_cell.value).strip(), f"{sheet}!{coord}")
+            meta_values[key_str.lower()] = (str(val_cell.value).strip(), f"{sheet}!{coord}")
 
     def _relative_luminance(hex_color):
         """WCAG 2.1 relative luminance from a 6-char hex color string."""
@@ -1015,19 +984,8 @@ def validate_workbook(filepath):
 
     # --- Check 19: Variable name uniqueness ---
     defined_variables = {}  # variable_name -> list of (sheet, coord)
-    for (sheet, coord), ctype in colored_cells.items():
-        if ctype not in ('input', 'output'):
-            continue
-        ws = wb[sheet]
-        cell = ws[coord]
-        ui_cell = ws.cell(row=cell.row, column=cell.column + 1)
-        if ui_cell.value is None:
-            continue
-        ui_str = str(ui_cell.value).strip()
-        if ui_str.startswith('='):
-            continue
-        for token in ui_str.split(';'):
-            token = token.strip()
+    for sheet, coord, ui_cell, ui_str, tokens in _iter_ui_strings(wb, colored_cells):
+        for token in tokens:
             if token.lower().startswith('variable='):
                 var_name = token.split('=', 1)[1]
                 if var_name:
@@ -1042,19 +1000,8 @@ def validate_workbook(filepath):
 
     # --- Check 20: ShowIf variable references ---
     known_vars = set(defined_variables.keys())
-    for (sheet, coord), ctype in colored_cells.items():
-        if ctype not in ('input', 'output'):
-            continue
-        ws = wb[sheet]
-        cell = ws[coord]
-        ui_cell = ws.cell(row=cell.row, column=cell.column + 1)
-        if ui_cell.value is None:
-            continue
-        ui_str = str(ui_cell.value).strip()
-        if ui_str.startswith('='):
-            continue
-        for token in ui_str.split(';'):
-            token = token.strip()
+    for sheet, coord, ui_cell, ui_str, tokens in _iter_ui_strings(wb, colored_cells):
+        for token in tokens:
             if token.lower().startswith('showifvariable='):
                 ref_var = token.split('=', 1)[1]
                 if ref_var and ref_var not in known_vars:
@@ -1115,19 +1062,9 @@ def validate_workbook(filepath):
 
     # --- Check 23: Duplicate tab names ---
     tab_names = {}  # tab_name_lower -> list of (sheet, coord)
-    for (sheet, coord), ctype in colored_cells.items():
-        if ctype != 'input':
-            continue
-        ws = wb[sheet]
-        cell = ws[coord]
-        ui_cell = ws.cell(row=cell.row, column=cell.column + 1)
-        if ui_cell.value is None:
-            continue
-        ui_str = str(ui_cell.value).strip()
-        if ui_str.startswith('='):
-            continue
-        for token in ui_str.split(';'):
-            token = token.strip()
+    for sheet, coord, ui_cell, ui_str, tokens in _iter_ui_strings(
+            wb, colored_cells, types=('input',)):
+        for token in tokens:
             if token.lower().startswith('tab='):
                 tab_name = token.split('=', 1)[1]
                 if tab_name:
@@ -1221,13 +1158,9 @@ def validate_workbook(filepath):
                         f"'JavaScript'.")
 
     # --- Check 28: Unbalanced double-quotes in formulas ---
-    # A well-formed Excel formula always has an even number of double-quote
-    # characters: every string literal opens and closes, and "" (an escaped
-    # quote) keeps the parity even. An odd count means a string is
-    # unterminated or a stray quote crept in - commonly from concatenating
-    # formula text in code (e.g. adjacent Python f-strings producing ""),
-    # which Excel can misread badly enough to strip the sheet's formulas on
-    # load.
+    # A well-formed formula has an even quote count ("" escapes keep parity
+    # even). An odd count means an unterminated string literal, which can make
+    # Excel strip the sheet's formulas on load.
     for sheet_name in wb.sheetnames:
         ws = wb[sheet_name]
         if has_molnify_ignore(ws):

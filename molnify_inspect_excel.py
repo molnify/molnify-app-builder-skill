@@ -22,14 +22,10 @@ MAX_CELL_VALUE_CHARS = 200
 
 
 def cap_value(v):
-    """Cap a long string cell value to a preview to keep the dump small.
+    """Cap a long string cell value to a preview plus a length marker.
 
-    Metadata-sheet cells routinely hold the app's full CSS / JavaScript (tens of KB
-    each) — content the builder already wrote. Echoing it back verbatim bloats the
-    tool output for no benefit and pushes legitimate trailing cells past the stream
-    cap. Long strings become a preview plus a length marker; everything structural
-    (address, fill, formula, short values) is preserved. The full value is still
-    used for the internal dependency analysis.
+    Metadata cells can hold tens of KB of CSS/JavaScript. The full value is
+    still used for the internal dependency analysis.
     """
     if isinstance(v, str) and len(v) > MAX_CELL_VALUE_CHARS:
         return {'preview': v[:MAX_CELL_VALUE_CHARS], 'len': len(v), 'truncated': True}

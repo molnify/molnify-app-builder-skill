@@ -62,12 +62,8 @@ _CELL_ADDR_RE = re.compile(
 )
 
 # openpyxl silently truncates any cell string over 32,767 chars the moment it is
-# assigned to a cell (not at save), destroying the tail - commonly the end of large
-# JS/CSS metadata in headless apps. The guard must therefore run on the raw string
-# BEFORE it reaches a cell; once assigned, cell.value is already truncated and no
-# check can recover it. Exactly 32,767 is legal, so the guard is strictly '>'.
-# (Raw-openpyxl callers that assign cells directly bypass this - molnify_validate.py
-# flags a cell sitting at exactly 32,767 as the post-hoc backstop for that path.)
+# assigned to a cell (not at save), so the guard must run on the raw string before
+# it reaches a cell. Exactly 32,767 is legal, so the check is strictly '>'.
 _CELL_CHAR_LIMIT = 32767
 
 
@@ -273,8 +269,10 @@ class AppBuilder:
         Returns:
             The row number on the App sheet where this input will be placed.
         """
-        # Insert separator row before a new tab/divider section
-        if _has_section_break(ui) and self._items:
+        # Insert separator row before a new tab/divider section. Deferred outputs
+        # don't count: they are written after the inline items, so only a
+        # preceding inline item makes save() insert the separator.
+        if _has_section_break(ui) and self._has_inline_items():
             self._next_row += 1
         row = self._next_row
         item = {
@@ -319,8 +317,9 @@ class AppBuilder:
                     item['ui'] += ';amongInputs'
             else:
                 item['ui'] = 'amongInputs'
-            # Insert separator row before a new tab/divider section
-            if _has_section_break(ui) and self._items:
+            # Insert separator row before a new tab/divider section (only a
+            # preceding inline item makes save() insert it - see add_input)
+            if _has_section_break(ui) and self._has_inline_items():
                 self._next_row += 1
             row = self._next_row
             self._items.append(('output', item))
@@ -330,9 +329,10 @@ class AppBuilder:
             # Deferred: will be placed after all inputs + interleaved outputs
             item['_deferred'] = True
             self._items.append(('output', item))
-            # Predict row: count how many items are in the list so far,
-            # plus the separator row
             return self._predict_deferred_output_row()
+
+    def _has_inline_items(self):
+        return any(not item.get('_deferred') for _typ, item in self._items)
 
     def _predict_deferred_output_row(self):
         """Predict the row number for the next deferred output.
@@ -344,7 +344,6 @@ class AppBuilder:
         inline_items = [(typ, item) for typ, item in self._items
                         if not item.get('_deferred')]
         inline_count = len(inline_items)
-        # Count separator rows inserted before tab/divider sections
         section_breaks = sum(
             1 for i, (typ, item) in enumerate(inline_items)
             if i > 0 and _has_section_break(item.get('ui') or '')
@@ -353,7 +352,6 @@ class AppBuilder:
             1 for typ, item in self._items
             if item.get('_deferred') and item is not self._items[-1][1]
         )
-        # Row = inline items + section breaks + separator row + deferred before + 1
         has_inline = inline_count > 0
         return (inline_count + section_breaks
                 + (1 if has_inline else 0) + deferred_before + 1)
@@ -463,7 +461,6 @@ class AppBuilder:
         meta_ws = wb.active
         meta_ws.title = 'Metadata'
 
-        # Auto-add ParseAllSheets - always needed since Metadata and App are separate sheets
         has_parse_all = any(k == 'ParseAllSheets' for k, _ in self._metadata)
         if not has_parse_all:
             self._metadata.append(('ParseAllSheets', 'TRUE'))
