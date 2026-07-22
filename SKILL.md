@@ -3,7 +3,7 @@ name: molnify-app-builder
 description: "Build, convert, validate, and style Molnify apps: spreadsheet-driven web applications where Excel or Google Sheets formulas drive the logic and colored cells define inputs, outputs, charts, and actions. Use when creating a Molnify app from scratch, converting an existing spreadsheet into one, validating or styling an app, or answering questions about how Molnify apps work."
 license: Apache-2.0
 metadata:
-  version: 1.0.13
+  version: 1.0.14
 ---
 
 # Molnify App Development Guide
@@ -360,7 +360,6 @@ Actions are automated operations triggered by button clicks. Each action is defi
 | `type` | Action type (required) |
 | `title` | Button label |
 | `name` | Internal name (used by `performActionWithName()`) |
-| `position` | Button position |
 | `hidden` | TRUE to hide button |
 | `cssClass` | Custom CSS class |
 | `showIfCell` | Conditional display cell |
@@ -841,4 +840,4 @@ Use `var=variableName` to store validation dropdown options in a JavaScript vari
 
 ---
 
-*This is v1.0.13 of the skill, published 2026-07-14. Installed copies are version-pinned; to update to the latest release, re-run `npx skills add https://app.molnify.com` (see `README.md`).*
+*This is v1.0.14 of the skill, published 2026-07-22. Installed copies are version-pinned; to update to the latest release, re-run `npx skills add https://app.molnify.com` (see `README.md`).*
