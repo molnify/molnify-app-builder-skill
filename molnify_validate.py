@@ -1181,6 +1181,23 @@ def validate_workbook(filepath):
                           f"code). This can make Excel strip the sheet's "
                           f"formulas on load. Verify the quotes balance.")
 
+    # --- Check 29: Formatted output cells in headless apps ---
+    # The calculate response runs each output through the cell's Excel number
+    # format, so a $#,##0 output comes back as the string "$901,185" and
+    # +value/parseFloat in the custom frontend yields NaN.
+    if headless_val and headless_val[0].upper() == 'TRUE':
+        for (sheet_name, coord), ctype in colored_cells.items():
+            if ctype != 'output':
+                continue
+            fmt = wb[sheet_name][coord].number_format
+            if fmt and fmt != 'General':
+                warning(f"{sheet_name}!{coord}: output cell has number format "
+                        f"'{fmt}' and Headless is TRUE. The calculate response "
+                        f"returns the formatted string (e.g. '$1,234'), which "
+                        f"breaks numeric parsing in custom frontend JS. Use "
+                        f"the General format and format the value in "
+                        f"JavaScript instead.")
+
     # --- Print results ---
     print(f"=== Validation: {filepath} ===")
     print(f"Sheets: {', '.join(wb.sheetnames)}")

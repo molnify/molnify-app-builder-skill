@@ -435,7 +435,8 @@ class AppBuilder:
             value: Cell value - string, number, or formula (str starting with '=').
 
         Raises:
-            ValueError: If the address cannot be parsed.
+            ValueError: If the address cannot be parsed, or targets A1 of a
+                registered model sheet (A1 holds 'molnifyIgnore').
         """
         m = _CELL_ADDR_RE.match(address)
         if not m:
@@ -444,6 +445,10 @@ class AppBuilder:
         sheet = m.group(1) or m.group(2) or 'App'
         col_str = m.group(3)
         row_num = int(m.group(4))
+        if sheet in self._model_sheets and col_str.upper() == 'A' and row_num == 1:
+            raise ValueError(
+                f"Cannot write to {sheet}!A1: model sheets keep 'molnifyIgnore' in A1 "
+                f"so the sheet is excluded from color interpretation. Start content at row 2.")
         self._extra_cells.append((sheet, col_str, row_num, value))
 
     def save(self, filepath):

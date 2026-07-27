@@ -183,7 +183,7 @@ Send changed input values, receive calculated output values.
 ```
 
 **Key details:**
-- Only send inputs that changed ("dirty") - not all inputs
+- The backend is stateless - each request starts from the spreadsheet's default values, and any input not included in `changes` reverts to its default
 - Values are always strings, even numbers (`"42"` not `42`)
 - `requestID` must be unique per request - use `String(Date.now())`
 - `dateModified` is **required** - available as `window.molnify.dateModified`. The backend rejects requests with a missing `dateModified`.
@@ -375,6 +375,9 @@ recalc();
 
 **Response `changes` may not include `variable`.**
 The calculate response returns `{cell, value, name}` - the `variable` field may or may not be present. Build a lookup map from `MolnifySDK.getAllVariables()` to translate cell references back to variable names.
+
+**Output values arrive pre-formatted with the cell's number format.**
+The backend runs each output through Excel's number format when building the response, so an output cell formatted as `$#,##0` returns the string `"$901,185"`, not `901185.35` - and `+value` / `parseFloat` yield `NaN`. Keep output cells on the General format and do all number formatting in JavaScript.
 
 **Charts require special handling.**
 Chart data comes back in `data.charts[].valueObject`, not in `data.changes`. Parse the valueObject and render with a JS charting library (Chart.js, D3, etc.).
