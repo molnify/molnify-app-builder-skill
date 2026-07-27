@@ -388,6 +388,13 @@ When executing an action, send ALL current input values in `changes` - not just 
 **Autofill works, but getting the data to the frontend requires hidden outputs.**
 Autofill runs server-side during `MolnifySDK.calculate()`, so named ranges are populated normally. However, the calculate response only returns output cell values - not raw named range contents. To access autofill data in your frontend, create hidden outputs that read from the named range (e.g. using `INDEX`, `TEXTJOIN`, or concatenation formulas) and expose them via `variable=`. Parse the output values in your JavaScript.
 
+**`TEXTJOIN` only works with plain range references.**
+```
+=TEXTJOIN(";",TRUE,Autofill!A2:E50)                             works
+=TEXTJOIN(";",TRUE,Autofill!A2:A50&"~"&Autofill!B2:B50)         #VALUE! (computed argument)
+=TEXTJOIN(";",TRUE,IF(Autofill!A2:A50="","",Autofill!A2:A50))   #VALUE! (array argument)
+```
+
 **Scenarios are not supported in headless mode.**
 The scenario load/save/share UI is part of the standard frontend and there is no public API for it. If your app needs to persist user state, use database tables with `addrecord`/`insertrow` actions instead.
 
