@@ -86,6 +86,17 @@ def _has_section_break(ui):
     return 'tab=' in ui_lower or 'dividername=' in ui_lower
 
 
+def _to_xml(root, default_ns):
+    """Serialize with default_ns as the unprefixed namespace.
+
+    ElementTree's prefix map is global and holds one URI per prefix, so registering '' for a
+    second namespace evicts the first. Claim it per document, immediately before writing, or
+    the evicted namespace serializes as ns0: on every element.
+    """
+    ElementTree.register_namespace('', default_ns)
+    return ElementTree.tostring(root, xml_declaration=True, encoding='UTF-8')
+
+
 def _convert_inline_strings(filepath):
     """Convert openpyxl inline strings to shared strings for Molnify compatibility.
 
@@ -95,13 +106,11 @@ def _convert_inline_strings(filepath):
     string table (t="s") instead, and removes empty <v/> elements from
     formula cells.
     """
-    ElementTree.register_namespace('', _NS)
     ElementTree.register_namespace('r', _NS_R)
 
     _REL_NS = 'http://schemas.openxmlformats.org/package/2006/relationships'
     _SS_REL_TYPE = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings'
     _SS_CONTENT_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml'
-    ElementTree.register_namespace('', _REL_NS)  # for rels files
 
     buf = io.BytesIO()
     shared_strings = []
@@ -157,7 +166,7 @@ def _convert_inline_strings(filepath):
 
         if sheet_modified:
             modified = True
-            raw_data[filename] = ElementTree.tostring(root, xml_declaration=True, encoding='UTF-8')
+            raw_data[filename] = _to_xml(root, _NS)
 
     if not modified and not shared_strings:
         return  # Nothing to do
@@ -173,13 +182,12 @@ def _convert_inline_strings(filepath):
             if text and (text[0] in (' ', '\t', '\n') or text[-1] in (' ', '\t', '\n')):
                 t_el.set('{http://www.w3.org/XML/1998/namespace}space', 'preserve')
             t_el.text = text
-        raw_data['xl/sharedStrings.xml'] = ElementTree.tostring(sst, xml_declaration=True, encoding='UTF-8')
+        raw_data['xl/sharedStrings.xml'] = _to_xml(sst, _NS)
 
     # If shared strings file is new, update content types and workbook rels
     if not has_shared_strings and shared_strings:
         # Update [Content_Types].xml
         if '[Content_Types].xml' in raw_data:
-            ElementTree.register_namespace('', _NS_CT)
             ct_root = ElementTree.fromstring(raw_data['[Content_Types].xml'])
             has_override = any(
                 el.get('PartName') == '/xl/sharedStrings.xml'
@@ -189,12 +197,11 @@ def _convert_inline_strings(filepath):
                 override = ElementTree.SubElement(ct_root, f'{{{_NS_CT}}}Override')
                 override.set('PartName', '/xl/sharedStrings.xml')
                 override.set('ContentType', _SS_CONTENT_TYPE)
-            raw_data['[Content_Types].xml'] = ElementTree.tostring(ct_root, xml_declaration=True, encoding='UTF-8')
+            raw_data['[Content_Types].xml'] = _to_xml(ct_root, _NS_CT)
 
         # Update xl/_rels/workbook.xml.rels
         rels_file = 'xl/_rels/workbook.xml.rels'
         if rels_file in raw_data:
-            ElementTree.register_namespace('', _REL_NS)
             rels_root = ElementTree.fromstring(raw_data[rels_file])
             has_rel = any(
                 el.get('Type') == _SS_REL_TYPE
@@ -213,7 +220,7 @@ def _convert_inline_strings(filepath):
                 rel.set('Id', f'rId{max_id + 1}')
                 rel.set('Type', _SS_REL_TYPE)
                 rel.set('Target', 'sharedStrings.xml')
-            raw_data[rels_file] = ElementTree.tostring(rels_root, xml_declaration=True, encoding='UTF-8')
+            raw_data[rels_file] = _to_xml(rels_root, _REL_NS)
 
     # Write everything back
     with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zout:
