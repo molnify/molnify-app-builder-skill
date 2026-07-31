@@ -196,6 +196,31 @@ Run an action. Same payload as `/api/calculate`, plus `actionId` (a 0-based inte
 **Key details:**
 - `actionId` is a 0-based integer index - use `MolnifySDK.execute(nameOrIndex)` to avoid dealing with indices
 - All current input values should be sent in `changes` so the backend can evaluate action property formulas before executing
+- All keys in the response are lowercase (`downloadurl`, `suppressdownload`, `responsevalue`, ...)
+
+**Response for file-producing actions** (`generatereport`, `generatefile`, `downloadquery`, `downloadtable`) - these run asynchronously, so `success` means *the job started*, not that the file exists:
+```json
+{ "status": "success", "downloadurl": "/download-generated-file/status/report-<id>-quote.pdf" }
+```
+`generatereport` also returns `"suppressdownload": "true"|"false"` (from the action's `suppressDownload` property). There is no `changes` array. Poll `downloadurl` as below.
+
+### GET `/download-generated-file/status/{fileId}`
+
+Poll for an async file action's result. **Root-relative on the app's own origin - not on `calcUrl`.** The compute service returns the path; the app host serves it. Resolve it against `window.location`, not `window.molnify.calcUrl`.
+
+**Responses:**
+```json
+{ "status": "pending" }
+{ "status": "success", "downloadurl": "/download-generated-file/report-<id>-quote.pdf" }
+{ "status": "error", "message": "Unexpected status: Failed - ..." }
+```
+
+**Key details:**
+- Poll about once a second until `status` leaves `pending`. The standard UI also retries on network/HTTP errors rather than giving up - a status request can fail transiently while the job runs.
+- A PDF render takes seconds to tens of seconds; the standard UI warns the user it "may take up to a minute".
+- Generation failures surface **only here**, never in the `/api/execute` response - it has already returned by then.
+- The `downloadurl` in the `success` response is the file itself (note: no `/status/` segment). It is served with `Content-Disposition: attachment`, so navigating a hidden iframe to it starts the download without leaving the page - that is what the standard UI does.
+- **The file URL is single-use.** The server deletes the temp file and clears its status as soon as it has streamed it, so a second request 404s. Don't offer a "download again" link - re-run the action instead.
 
 ### POST `/api/dropdown_rows`
 
