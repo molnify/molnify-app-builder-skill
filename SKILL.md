@@ -3,7 +3,7 @@ name: molnify-app-builder
 description: "Build, convert, validate, and style Molnify apps: spreadsheet-driven web applications where Excel or Google Sheets formulas drive the logic and colored cells define inputs, outputs, charts, and actions. Use when creating a Molnify app from scratch, converting an existing spreadsheet into one, validating or styling an app, or answering questions about how Molnify apps work."
 license: Apache-2.0
 metadata:
-  version: 1.0.18
+  version: 1.0.19
 ---
 
 # Molnify App Development Guide
@@ -590,31 +590,52 @@ successText: Saved and emailed!
 ```
 
 #### AI Prompt Action (`type: aiprompt`)
-Send a prompt to an AI model (Google Gemini) and store the response in a variable.
+Send a prompt to an AI model and store the response in a variable.
 
-**Prerequisites:** Before using this action, the app uploader must: (1) be granted access to the AI model, (2) have created a token pool, and (3) have assigned the app to the token pool. All of this is managed in the AI Manager.
+**Prerequisites:** Before using this action, the app uploader must: (1) be granted access to the AI model, (2) have created a credit pool, and (3) have assigned the app to the credit pool. All of this is managed in the AI Manager.
 
 | Property | Description | Default |
 |----------|-------------|---------|
-| `model` | Model identifier: `gemini-flash` or `gemini-pro` | (required) |
+| `model` | Model identifier - see the model table below | (required) |
 | `prompt` | The prompt text to send to the AI model | (required) |
-| `maxOutputTokens` | Maximum tokens in the response | 1024 |
-| `thinkingBudget` | Token budget for model reasoning (must be > 0 for `gemini-pro`) | 0 |
+| `maxResponseTokens` | Maximum model tokens in the response | 1024 |
+| `maxThinkingTokens` | Model token budget for reasoning (must be > 0 for `gemini-pro`) | 0 |
 | `responseSchema` | JSON schema to enforce structured response format | - |
 | `responseVariable` | Variable name to store the AI response in | "aipromptresponse" |
 
-**Models:**
+**Models:** grouped by family, smaller tier first within each. Output tokens cost several times more
+than input tokens on every model, so a long response moves the bill more than a long prompt.
 
-| Model | Best For |
+| Model | Best for |
 |-------|----------|
-| `gemini-flash` | Fast responses, summarization, extraction, real-time use |
-| `gemini-pro` | Complex analysis, long-form generation, planning, reasoning-heavy tasks |
+| `claude-haiku` | Fast low-cost answers, high-volume prompts, tagging, extraction, rewrites |
+| `claude-sonnet` | Balanced quality and cost, strong reasoning and writing |
+| `claude-opus` | Complex high-stakes work, thorough multi-step reasoning, nuanced tasks |
+| `gemini-flash` | Low latency, cost-effective, simple prompts |
+| `gemini-pro` | Higher quality output, stronger multi-step reasoning and planning |
+| `glm-instant` | Fast answers on straightforward prompts, bulk processing, EU-hosted |
+| `glm` | Reasoning on multi-step prompts, long-context analysis and extraction, EU-hosted |
+| `kimi-instant` | Fast answers on straightforward prompts, bulk processing, EU-hosted |
+| `kimi` | Frontier reasoning, very long context for whole-document analysis, EU-hosted |
 
-`gemini-pro` requires `thinkingBudget` > 0 and consumes more tokens per request than `gemini-flash`.
+**Default to `claude-haiku`** for well-defined, high-volume work - extraction, classification,
+tagging, short rewrites - and **`claude-sonnet`** when the prompt needs real reasoning, judgement,
+or writing quality. Between them they cover most app prompts. The models differ substantially in
+what they cost per call, so reach for a larger one only once a smaller one has actually fallen
+short on the real prompt.
+
+**Reasoning:** `gemini-pro` requires `maxThinkingTokens` > 0 and fails without it. The `-instant`
+variants (`glm-instant`, `kimi-instant`) are the same underlying models with reasoning forced off,
+so `maxThinkingTokens` has no effect on them. On every other model a value > 0 enables reasoning.
+
+How the number is read depends on the provider: Gemini spends exactly the budget you set, while the
+Claude, GLM, and Kimi models only look at whether it is above zero and then decide for themselves
+how much to reason. So on those, `maxThinkingTokens: 1` and `maxThinkingTokens: 5000` do the same
+thing. Thinking tokens count towards `maxResponseTokens`, so raise it alongside.
 
 **Response handling:** The AI response text is set on the input matching `responseVariable` (default `aipromptresponse`), allowing you to display it or parse it with `FILTERJSON()`. If `responseSchema` is provided, the response is constrained to valid JSON matching the schema - use `FILTERJSON()` on the response variable's cell to extract individual fields from it.
 
-**Token quota:** Each execution consumes tokens from the app's assigned token pool. If the pool is exhausted, the action returns an error.
+**Credit usage:** Each execution consumes Molnify Credits from the app's assigned credit pool. If the pool is exhausted, the action returns an error.
 
 **Dynamic prompts:** Like all action properties, `prompt` can be a formula that references inputs/outputs:
 ```
@@ -624,11 +645,11 @@ prompt: ="Summarize the following text in "&B2&" words: "&B3
 **Structured output with `responseSchema`:** Provide a JSON schema to get predictable, parseable responses. Use `FILTERJSON()` on the response variable's cell to extract fields from the JSON response:
 ```
 type: aiprompt
-model: gemini-flash
+model: claude-haiku
 prompt: ="Classify this feedback as positive, negative, or neutral: "&B2
 responseSchema: {"type":"object","properties":{"sentiment":{"type":"string","enum":["positive","negative","neutral"]},"confidence":{"type":"number"}},"required":["sentiment","confidence"]}
 responseVariable: classification
-maxOutputTokens: 256
+maxResponseTokens: 512
 ```
 If `classification` is in cell B10, use `=FILTERJSON(B10, "sentiment")` and `=FILTERJSON(B10, "confidence")` in output cells to extract the values.
 
@@ -636,7 +657,7 @@ If `classification` is in cell B10, use `=FILTERJSON(B10, "sentiment")` and `=FI
 ```
 type: aiprompt
 title: Generate Summary
-model: gemini-flash
+model: claude-haiku
 prompt: ="Write a 3-sentence summary of: "&B2
 responseVariable: summary
 successSilent: TRUE
@@ -840,4 +861,4 @@ Use `var=variableName` to store validation dropdown options in a JavaScript vari
 
 ---
 
-*This is v1.0.18 of the skill, published 2026-07-31. Installed copies are version-pinned; to update to the latest release, re-run `npx skills add https://app.molnify.com` (see `README.md`).*
+*This is v1.0.19 of the skill, published 2026-08-26. Installed copies are version-pinned; to update to the latest release, re-run `npx skills add https://app.molnify.com` (see `README.md`).*
