@@ -4,18 +4,9 @@ Companion to the main reference.
 
 Replace Molnify's default UI with a fully custom DOM while keeping the backend calculation engine, actions, and authentication.
 
-**When to use this:**
-- Building a game, interactive visualization, or drag-and-drop interface
-- Creating a mobile-optimized UI that doesn't fit the form paradigm
-- White-labeling where the app must look nothing like Molnify
-- Embedding Molnify calculations into a larger single-page app
+**Key principle:** The JavaScript is only the UI layer. All business logic, calculations, validation, and data transformations belong in the spreadsheet. Send input values to the backend via `MolnifySDK.calculate()` and read results from the response - do not reimplement formulas in JS.
 
-**When NOT to use this:**
-- If you just want a different layout → use CSS/JS to restyle the existing DOM (see `styling.md`)
-- If you want a few custom components → use HTML outputs with `amongInputs`
-- If you want custom buttons or navigation → see the wizard and grouped sections patterns in `patterns.md`
-
-**Key principle:** The JavaScript is only the UI layer. All business logic, calculations, validation, and data transformations belong in the spreadsheet. Send input values to the backend via `MolnifySDK.calculate()` and read results from the response - do not reimplement formulas in JS. This keeps the spreadsheet as the single source of truth and means the app works identically whether served via headless mode or the default UI.
+This is what keeps a headless app honest. The user can read a formula and check it; they cannot read your JavaScript. A value computed in the frontend is a value nobody but you can verify, and it makes the app behave differently from the spreadsheet it came from.
 
 ---
 

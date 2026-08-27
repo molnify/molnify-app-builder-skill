@@ -10,7 +10,9 @@ For visual styling (colors, fonts, CSS Grid layouts, dashboard aesthetics), see 
 
 ## Choosing a Pattern
 
-Pick the simplest approach that meets the requirement. Each row below is more complex than the one above - only escalate when the simpler option genuinely can't work.
+These patterns are for apps built on the standard UI. Among them, pick the simplest that meets the requirement - each row below needs more custom code than the one above.
+
+The last row leaves the standard UI altogether. That is a separate decision, not a harder pattern; the main reference decides it.
 
 | What the user needs | Pattern | Why |
 |---------------------|---------|-----|
@@ -22,15 +24,15 @@ Pick the simplest approach that meets the requirement. Each row below is more co
 | Live formatted preview (invoice, certificate) | [Live Report Preview](#live-report-preview) | HTML output with formula, auto-updates on calc |
 | Printable output | [Print-Optimized Layout](#print-optimized-layout) | CSS `@media print` rules only |
 | Chart type Molnify doesn't support (radar, polar, heatmap) | [Custom Chart (External Library)](#custom-chart-external-library) | HeadHTML loads library, JS renders into a stable canvas |
-| Inline table editing, drag-and-drop, complex table interactions | Headless mode (`Headless: TRUE`) | You need to own the DOM entirely - see `custom-frontend.md` |
+| Inline table editing, drag-and-drop, complex table interactions | Headless mode (`Headless: TRUE`) | The calc cycle re-renders Molnify-owned DOM and destroys inline state - see `custom-frontend.md` |
 
 ### The key question for table-heavy apps
 
 If the app involves a data table with row-level actions, ask: **does the user edit data inside the table, or in a separate form?**
 
-- **Separate form** → Master-Detail pattern. The table is a read-only Molnify output that re-renders safely on each calculation. Editing happens in standard inputs. This is the recommended approach for most CRUD apps.
+- **Separate form** → Master-Detail pattern. The table is a read-only Molnify output that re-renders safely on each calculation. Editing happens in standard inputs. This is the standard-UI answer for most CRUD apps.
 
-- **Inside the table** (contenteditable cells, inline dropdowns, edit/save/cancel buttons per row) → Custom frontend. You need full control over the DOM because Molnify will re-render the table on every calculation, destroying your inline editing state, event handlers, and injected elements. See `custom-frontend.md` and the "DOM Lifecycle" section in `advanced-topics.md`.
+- **Inside the table** (contenteditable cells, inline dropdowns, edit/save/cancel buttons per row) → no standard-UI pattern fits. Molnify re-renders its own DOM on every calculation, destroying inline editing state, event handlers, and injected elements. Own the DOM instead: `custom-frontend.md`, plus the "DOM Lifecycle" section in `advanced-topics.md`.
 
 ---
 

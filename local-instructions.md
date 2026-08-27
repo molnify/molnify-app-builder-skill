@@ -57,7 +57,7 @@ The main reference covers most tasks. The companion files are for **specific nee
 - **`patterns.md`** - Wizards, grouped forms, master-detail, conditional forms. Read when implementing a **specific UX pattern** - these are tested implementations, don't reinvent them.
 - **`database.md`** - Database tables, schema provisioning, autofill, reading and writing data
 - **`report-templates.md`** - Report template engines (HTML, DOCX, XLSX), template syntax
-- **`custom-frontend.md`** - Replace Molnify's default UI entirely with a headless, fully custom frontend
+- **`custom-frontend.md`** - Headless apps: the SDK, the bootstrap object, and what changes when you own the DOM. Read whenever you build headless, which is the default choice
 - **`advanced-topics.md`** - DOM lifecycle, JS execution details, setValueForVariable debouncing, troubleshooting
 - **`python.md`** - openpyxl examples, color conventions, working with formulas
 - **`examples/`** - Complete app examples: expense tracker, sales dashboard, financial model

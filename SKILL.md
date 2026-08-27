@@ -3,7 +3,7 @@ name: molnify-app-builder
 description: "Build, convert, validate, and style Molnify apps: spreadsheet-driven web applications where Excel or Google Sheets formulas drive the logic and colored cells define inputs, outputs, charts, and actions. Use when creating a Molnify app from scratch, converting an existing spreadsheet into one, validating or styling an app, or answering questions about how Molnify apps work."
 license: Apache-2.0
 metadata:
-  version: 1.0.19
+  version: 1.1.0
 ---
 
 # Molnify App Development Guide
@@ -12,7 +12,7 @@ This is the primary reference for building Molnify applications.
 
 ## Overview
 
-Molnify apps are **spreadsheet-driven calculation applications**. You design your app in Excel or Google Sheets, where:
+Molnify apps are **spreadsheet-driven web applications**. You design your app in Excel or Google Sheets, where:
 - **Green cells** = Inputs (user-provided parameters)
 - **Red cells** = Outputs (calculated results)
 - **Blue cells** = Charts and Tables (aggregated data visualizations)
@@ -22,6 +22,10 @@ Molnify apps are **spreadsheet-driven calculation applications**. You design you
 The spreadsheet formulas perform all calculations. Molnify renders the UI and handles user interaction.
 
 Molnify reads the Excel file **left to right, top to bottom**. The order cells appear determines the order in the app UI.
+
+### What Molnify Covers
+
+The spreadsheet is how an app is *authored*, not a ceiling on what it can be. Actions reach outside the workbook (email, HTTP, AI prompts), database tables give apps real storage, and a headless frontend puts the whole DOM under your control. **A Molnify app can do anything a web page can do.**
 
 ### Cell Structure
 
@@ -102,14 +106,24 @@ Alongside this reference, companion guides cover specific needs: `creating-from-
 
 ### Choosing Your UI Approach
 
-| What you want | Approach | Guide |
-|---------------|----------|-------|
-| Colors, fonts, spacing | CSS metadata + the CSS & DOM quick ref above | `design.md` |
-| Rearranged layout, dashboard, CSS Grid | CSS + `JavaScriptAfterLoad` | `styling.md` |
-| Wizard, master-detail, conditional sections | Standard Molnify features | `patterns.md` |
-| Fully custom DOM | Headless mode (`Headless: TRUE`) | `custom-frontend.md` |
+- **Headless** (`Headless: TRUE`) - Molnify serves an empty page plus the SDK; you write the DOM. See `custom-frontend.md`.
+- **Standard UI** - Molnify builds the page from colored cells; you restyle with CSS metadata and `JavaScriptAfterLoad`. See `design.md`, `styling.md`, `patterns.md`.
 
-**Many "modern" or "professional" requests are met by the second row** - restyling and rearranging the default UI is usually the quickest path. When a design needs a layout or interaction the default UI can't express, a custom (headless) frontend is a fully supported tool - reach for it whenever it fits the goal.
+**Default to headless.** It does anything a web page can, usually renders faster, and is generally less work to build than bending the default DOM into shape - there are no inherited quirks to fight, only the ones you introduce. The standard UI carries a dated look that CSS can soften but not escape.
+
+**Choose the standard UI when the user needs to own the interface.** Molnify generates it from the spreadsheet, so the user can add an input, drop an output or re-order a section by editing cells and re-uploading. A headless frontend lives in JS and CSS we assume the user does not read: they can still change any calculation, never the interface.
+
+| Situation | Choose |
+|-----------|--------|
+| The user will keep editing the spreadsheet and expects the app to follow | Standard UI |
+| The user will want to add or remove UI elements without you | Standard UI |
+| Anything else | Headless |
+
+If you can't tell which it is, ask - it's one question and it decides the whole build.
+
+**All calculation stays in the spreadsheet either way.** A number derived in JavaScript is a number the user cannot audit. Send input values through `MolnifySDK.calculate()` and render what comes back.
+
+**Headless gives up:** scenarios (persist state in database tables instead), every metadata setting that configures the default chrome (`JavaScriptAfterLoad`, `JavaScriptAfterCalc`, `AutoCalcEnabled`, `EnabledFor*`, panel/banner/color settings, `Template`), SDK access to dropdown options, and automatic `responsevalue` handling.
 
 ---
 
@@ -861,4 +875,4 @@ Use `var=variableName` to store validation dropdown options in a JavaScript vari
 
 ---
 
-*This is v1.0.19 of the skill, published 2026-08-26. Installed copies are version-pinned; to update to the latest release, re-run `npx skills add https://app.molnify.com` (see `README.md`).*
+*This is v1.1.0 of the skill, published 2026-08-27. Installed copies are version-pinned; to update to the latest release, re-run `npx skills add https://app.molnify.com` (see `README.md`).*
