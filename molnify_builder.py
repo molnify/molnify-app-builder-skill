@@ -394,6 +394,10 @@ class AppBuilder:
     def add_metadata(self, key, value):
         """Add a metadata entry (purple cells).
 
+        Rows are written in call order. Keys that append rather than replace
+        ("additionalCSS", "additionalJavaScript") may be passed repeatedly to
+        spread a value over several cells.
+
         Args:
             key: Metadata key (e.g. "EnabledForSave").
             value: Metadata value (e.g. "TRUE").

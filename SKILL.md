@@ -3,7 +3,7 @@ name: molnify-app-builder
 description: "Build, convert, validate, and style Molnify apps: spreadsheet-driven web applications where Excel or Google Sheets formulas drive the logic and colored cells define inputs, outputs, charts, and actions. Use when creating a Molnify app from scratch, converting an existing spreadsheet into one, validating or styling an app, or answering questions about how Molnify apps work."
 license: Apache-2.0
 metadata:
-  version: 1.1.0
+  version: 1.1.1
 ---
 
 # Molnify App Development Guide
@@ -732,7 +732,7 @@ Metadata cells (purple) configure application-wide settings.
 | Property | Description |
 |----------|-------------|
 | `CSS` | Complete custom CSS |
-| `additionalCSS` | CSS appended after the main `CSS` value. Use when a template provides base CSS and you want to extend it without replacing it. Also useful when CSS exceeds a single cell's 32,767-character limit - split across `CSS` and `additionalCSS`. |
+| `additionalCSS` | CSS appended after the main `CSS` value. Use when a template provides base CSS and you want to extend it without replacing it. Also useful when CSS exceeds a single cell's 32,767-character limit - split across `CSS` and `additionalCSS`. **Repeatable:** an app can have as many `additionalCSS` rows as it needs; each is appended in the order the rows appear, so place them after the `CSS` row. |
 | `TopBannerColor` | Top banner color. Paints the **top banner** (`#header`, the fixed full-width bar above the app), via `#molnifyAppBody .container-fluid`. This is a different element from `#appHeaderRow` (the app title bar inside `#content`) - it does not color that. |
 | `HeaderTextColor` | Colors the **app title** at the top of the content area (`h1#appHeader`/`#pAppTitle`, via `#molnifyAppBody h1`) - not the top banner (a logo, no text). The title sits on the page background, light by default, so keep it **dark**; only go light for a dark-background app. |
 | `PanelHeaderColor` | Panel header color |
@@ -777,7 +777,7 @@ Metadata cells (purple) configure application-wide settings.
 | Property | When it runs | Description |
 |----------|--------------|-------------|
 | `JavaScript` | Page load (early) | Custom JS code, runs before app is fully interactive |
-| `additionalJavaScript` | Page load (early) | JavaScript appended after the main `JavaScript` value. Use when a template provides base JS and you want to extend it, or when JS exceeds a single cell's 32,767-character limit - split across `JavaScript` and `additionalJavaScript`. |
+| `additionalJavaScript` | Page load (early) | JavaScript appended after the main `JavaScript` value. Use when a template provides base JS and you want to extend it, or when JS exceeds a single cell's 32,767-character limit - split across `JavaScript` and `additionalJavaScript`. **Repeatable:** an app can have as many `additionalJavaScript` rows as it needs; each is appended in the order the rows appear, so place them after the `JavaScript` row. |
 | `JavaScriptAfterLoad` | Page load (late) | JS to run after app fully loads and initial calculation completes |
 | `JavaScriptAfterCalc` | Every calculation | JS to run after each calculation (including initial load) |
 
@@ -875,4 +875,4 @@ Use `var=variableName` to store validation dropdown options in a JavaScript vari
 
 ---
 
-*This is v1.1.0 of the skill, published 2026-08-27. Installed copies are version-pinned; to update to the latest release, re-run `npx skills add https://app.molnify.com` (see `README.md`).*
+*This is v1.1.1 of the skill, published 2026-08-27. Installed copies are version-pinned; to update to the latest release, re-run `npx skills add https://app.molnify.com` (see `README.md`).*
