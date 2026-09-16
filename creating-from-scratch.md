@@ -63,7 +63,7 @@ app.add_input("Status", "Active", options=["Active", "Inactive", "Pending"])
 app.add_input("Priority", "Medium", options=["Low", "Medium", "High", "Critical"])
 ```
 
-This creates a hidden `_Options` sheet with named ranges and data validation - no manual openpyxl post-processing needed. The `dropdown` UI type is added automatically.
+This creates an `_Options` sheet (with `molnifyIgnore` in A1), named ranges and data validation - no manual openpyxl post-processing needed. The `dropdown` UI type is added automatically.
 
 #### Interleaving Outputs Among Inputs
 

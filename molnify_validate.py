@@ -37,6 +37,7 @@ import re
 import sys
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
+from openpyxl.worksheet.formula import ArrayFormula, DataTableFormula
 
 
 # ---------------------------------------------------------------------------
@@ -334,6 +335,21 @@ def is_near_molnify_color(hex_color):
     return False
 
 
+def _unwrap_formula_objects(wb):
+    """Replace openpyxl's array and data-table formula objects with their formula text.
+
+    Every check reads formulas as strings starting with '='; the objects would otherwise
+    stringify to their Python repr. The workbook is never saved, so this is safe.
+    """
+    for ws in wb.worksheets:
+        for row in ws.iter_rows():
+            for cell in row:
+                if isinstance(cell.value, ArrayFormula):
+                    cell.value = cell.value.text
+                elif isinstance(cell.value, DataTableFormula):
+                    cell.value = f"=TABLE({cell.value.r1 or ''},{cell.value.r2 or ''})"
+
+
 def has_molnify_ignore(ws):
     """Check if sheet has molnifyIgnore in cell A1."""
     a1 = ws.cell(row=1, column=1).value
@@ -433,6 +449,7 @@ def _iter_ui_strings(wb, colored_cells, types=('input', 'output')):
 def validate_workbook(filepath):
     """Validate a Molnify Excel app and report issues."""
     wb = load_workbook(filepath)
+    _unwrap_formula_objects(wb)
     issues = []
 
     def error(msg):
@@ -450,8 +467,8 @@ def validate_workbook(filepath):
     sheets_with_colors = set()
     ignored_sheets = set()
 
-    for sheet_name in wb.sheetnames:
-        ws = wb[sheet_name]
+    for ws in wb.worksheets:
+        sheet_name = ws.title
         if has_molnify_ignore(ws):
             ignored_sheets.add(sheet_name)
             continue
@@ -540,7 +557,7 @@ def validate_workbook(filepath):
 
     # --- Check 4: molnifyIgnore on model sheets ---
     # Sheets that have no colored cells and are not the first sheet (metadata)
-    for sheet_name in wb.sheetnames:
+    for sheet_name in (ws.title for ws in wb.worksheets):
         if sheet_name in ignored_sheets:
             continue
         if sheet_name not in sheets_with_colors and sheet_name != first_sheet:
@@ -759,8 +776,8 @@ def validate_workbook(filepath):
                             f"Known types: {', '.join(sorted(KNOWN_ACTION_TYPES))}.")
 
     # --- Check 12: Unsupported Excel functions and _xlfn./_xludf. prefixes ---
-    for sheet_name in wb.sheetnames:
-        ws = wb[sheet_name]
+    for ws in wb.worksheets:
+        sheet_name = ws.title
         if has_molnify_ignore(ws):
             continue
         for row in ws.iter_rows():
@@ -1096,8 +1113,8 @@ def validate_workbook(filepath):
                 f"This will render as an empty output box.")
 
     # --- Check 25: String literals over 256 characters in formulas ---
-    for sheet_name in wb.sheetnames:
-        ws = wb[sheet_name]
+    for ws in wb.worksheets:
+        sheet_name = ws.title
         if has_molnify_ignore(ws):
             continue
         for row in ws.iter_rows():
@@ -1119,8 +1136,8 @@ def validate_workbook(filepath):
     # exceed this are silently truncated, which is particularly common for
     # JavaScript and CSS metadata in headless apps.
     _CELL_CHAR_LIMIT = 32767
-    for sheet_name in wb.sheetnames:
-        ws = wb[sheet_name]
+    for ws in wb.worksheets:
+        sheet_name = ws.title
         if has_molnify_ignore(ws):
             continue
         for row in ws.iter_rows():
@@ -1161,8 +1178,8 @@ def validate_workbook(filepath):
     # A well-formed formula has an even quote count ("" escapes keep parity
     # even). An odd count means an unterminated string literal, which can make
     # Excel strip the sheet's formulas on load.
-    for sheet_name in wb.sheetnames:
-        ws = wb[sheet_name]
+    for ws in wb.worksheets:
+        sheet_name = ws.title
         if has_molnify_ignore(ws):
             continue
         for row in ws.iter_rows():

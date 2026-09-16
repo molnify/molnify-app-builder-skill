@@ -25,6 +25,34 @@ Two ready-made scripts are provided for converting Excel files into Molnify apps
 - **`molnify_inspect_excel.py <file.xlsx>`** (installed command: `molnify-inspect-excel`) - Analyzes a plain Excel file before conversion. Outputs cell values, formulas, colors, conditional formatting, charts, named ranges, data validations, and a formula dependency analysis that identifies potential inputs and outputs.
 - **`molnify_validate.py <converted_file.xlsx>`** (installed command: `molnify-validate`) - Checks a converted Molnify app for common issues: missing metadata, incorrect colors, missing `molnifyIgnore`, input formulas referencing other inputs, chart structure problems. Returns exit code 0 if no errors, 1 otherwise.
 
+## AppBuilder API
+
+`from molnify_builder import AppBuilder`
+
+| Method | Returns | Notes |
+|--------|---------|-------|
+| `AppBuilder(app_id, app_name)` | | Writes `ID` and `Name` metadata |
+| `add_input(title, value, ui=None, tooltip=None, options=None)` | row | `tooltip` becomes a cell comment. `options` (list) builds a dropdown and prepends `dropdown` to `ui` |
+| `add_output(title, value, ui=None, tooltip=None, among_inputs=False)` | row | `among_inputs=True` places it in the input sequence and appends `amongInputs` to `ui` |
+| `add_chart(title, chart_type, series, labels, ui_extra=None)` | `None` | `series` is `{name: [values]}`, `labels` a list; `ui_extra` is appended after `chart_type` |
+| `add_action(properties)` | `None` | Dict of key → value; must include `type` |
+| `add_metadata(key, value)` | `None` | Written in call order; repeat `additionalCSS`/`additionalJavaScript` to split long values |
+| `add_model_sheet(name)` | `None` | Sheet with `molnifyIgnore` in A1 |
+| `set_cell(address, value)` | `None` | `"Sheet!B2"`, `"'My Sheet'!B2"`, or `"B2"` (App sheet). Raises on A1 of a model sheet |
+| `add_named_range(name, sheet, cell_range)` | `None` | e.g. `("items", "Autofill", "A2:C20")` |
+| `save(filepath)` | `None` | Also converts inline strings |
+
+Non-formula strings over 32,767 characters raise `ValueError` in `add_metadata` and `set_cell`.
+
+**Layout written by `save()`:**
+- **Sheet order:** `Metadata` (key in A, value in B), `App`, model sheets, sheets first named by `set_cell`, then `_Options` if any input has `options`. `_Options` is a visible sheet with `molnifyIgnore` in A1.
+- **App sheet columns:** title in A, colored value in B, UI in C.
+- **Inputs and `among_inputs` outputs:** from row 1 in call order. An item whose `ui` contains `tab=` or `dividerName=` gets a blank row before it, unless it is the first item.
+- **Other outputs:** after one blank row, in call order. The row returned for one of these assumes no inputs or `among_inputs` outputs are added after it.
+- **Charts:** after one blank row, then a blank row after each chart. Header row: title in A, series names from B, chart UI in the next column. Then one row per label: label in A, blue values from B.
+- **Actions:** after one blank row, each as key in A and yellow value in B, with a blank row between actions.
+- **`set_cell` runs last:** its cells are written after the layout, so an address on the App sheet overwrites what AppBuilder placed there.
+
 ## Cell Color Conventions
 
 Molnify identifies cell types by **exact** color matching (no tolerance). When **creating** apps, use the recommended colors below. When **reading/parsing** apps, be aware that the backend also accepts the additional variants listed for compatibility with Google Sheets and older Excel versions.
