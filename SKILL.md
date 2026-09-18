@@ -3,7 +3,7 @@ name: molnify-app-builder
 description: "Build, convert, validate, and style Molnify apps: spreadsheet-driven web applications where Excel or Google Sheets formulas drive the logic and colored cells define inputs, outputs, charts, and actions. Use when creating a Molnify app from scratch, converting an existing spreadsheet into one, validating or styling an app, or answering questions about how Molnify apps work."
 license: Apache-2.0
 metadata:
-  version: 1.1.3
+  version: 1.1.4
 ---
 
 # Molnify App Development Guide
@@ -90,11 +90,19 @@ Most common patterns at a glance:
 
 10. **Keep calculations in the spreadsheet, not in JavaScript** - Molnify's strength is that business logic lives in Excel formulas. Avoid offloading calculations, conditional logic, or data transformations to JavaScript. JS should be reserved for UI manipulation (DOM changes, styling, event handling), not for computing values that formulas can handle. This keeps the app auditable, testable, and maintainable.
 
-11. **COUNTA counts empty strings from autofill** - When autofill populates a named range, cells that receive no data are cleared but hold the value `""` (empty string). `COUNTA` counts these as non-empty. Use `COUNTIF(range,"<>")` or `SUMPRODUCT((range<>"")*1)` instead to count only cells with actual data.
+11. **COUNTA counts empty strings from autofill** - When autofill populates a named range, cells that receive no data are cleared but hold the value `""` (empty string). `COUNTA` counts these as non-empty, and so does `COUNTIF(range,"<>")` - the `<>` criterion matches an empty string and only excludes a genuinely blank cell. To count cells with actual data use `ROWS(range)-COUNTBLANK(range)` or `COUNTA(range)-COUNTIF(range,"")`; both treat `""` as empty. `SUMPRODUCT((range<>"")*1)` does not work here - see *Range arithmetic is not evaluated as an array* below.
 
 12. **Design with intent, not with effects** - Every app should look like it was designed for its purpose, not generated from a template. Pick a color palette that fits the domain. Choose fonts with character. Avoid generic AI-generated aesthetics: purple gradients on white, uniform rounded corners and card shadows on every element, pulsing animations, gradient text, emoji placeholders, and staggered fade-up animations. Left-aligned content is easier to scan than centered. Vary visual weight instead of making everything look the same. If it looks like every other AI-generated dashboard, it needs a point of view.
 
 13. **Validate the *assembled* string when building formulas in code** - Concatenating formula text in Python (especially adjacent f-strings) easily produces a stray `""` that Excel reads as an *escaped quote*, swallowing every following `&` operator and string into one literal. A corrupted formula doesn't just fail its own cell: on load Excel runs "file level validation and repair" and **strips the entire formula table for that sheet** rather than dropping the one bad formula - so the app can render with every formula gone. Adjacent pieces like `f'="<div>…"'` + `f'"&"<h2>…"'` concatenate to `="<div>…""&"<h2>…"`, where the `""` is misread. After building a formula programmatically, `print`/`assert` the final string and confirm the double-quotes are balanced and every `"&"` is a real operator, not buried inside a literal. `molnify_validate.py` flags formulas with an odd number of double-quotes, which catches the common form of this bug.
+
+14. **Range arithmetic is not evaluated as an array** - Molnify's engine does not do implicit array evaluation. In an ordinary formula cell, an argument that computes over a whole range - `(range>2)*1`, `--(range<>"")`, `rangeA&rangeB`, `IF(range="","",range)` - collapses to a single value by implicit intersection with the formula's own row or column. When there is no overlap the formula errors; when there is one it returns a plausible-looking wrong answer instead. The familiar Excel idioms built on this therefore do not work:
+    ```
+    ❌ =SUMPRODUCT((A2:A50>2)*B2:B50)     ✓ =SUMIF(A2:A50,">2",B2:B50)
+    ❌ =SUMPRODUCT(--(A2:A50<>""))        ✓ =COUNTA(A2:A50)-COUNTIF(A2:A50,"")
+    ❌ =SUM(IF(A2:A50="Bob",B2:B50))      ✓ =SUMIFS(B2:B50,A2:A50,"Bob")
+    ```
+    Reach for `SUMIF`/`SUMIFS`, `COUNTIF`/`COUNTIFS`, `AVERAGEIFS`, or a helper column that computes the per-row value so a plain `SUM` can total it. `SUMPRODUCT` is supported, but only with plain range references as arguments: `SUMPRODUCT(A2:A50,B2:B50)` is fine. Array formulas that a spreadsheet application genuinely entered as such (Ctrl+Shift+Enter) are evaluated correctly, but `molnify_builder.py` does not write them, so they are not an option when building an app in code.
 
 ### CSS & DOM Quick Reference
 
@@ -874,4 +882,4 @@ Use `var=variableName` to store validation dropdown options in a JavaScript vari
 
 ---
 
-*This is v1.1.3 of the skill, published 2026-09-16. Installed copies are version-pinned; to update to the latest release, re-run `npx skills add https://app.molnify.com` (see `README.md`).*
+*This is v1.1.4 of the skill, published 2026-09-18. Installed copies are version-pinned; to update to the latest release, re-run `npx skills add https://app.molnify.com` (see `README.md`).*

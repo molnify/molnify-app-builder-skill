@@ -407,8 +407,8 @@ Autofill runs server-side during `MolnifySDK.calculate()`, so named ranges are p
 **`TEXTJOIN` only works with plain range references.**
 ```
 =TEXTJOIN(";",TRUE,Autofill!A2:E50)                             works
-=TEXTJOIN(";",TRUE,Autofill!A2:A50&"~"&Autofill!B2:B50)         #VALUE! (computed argument)
-=TEXTJOIN(";",TRUE,IF(Autofill!A2:A50="","",Autofill!A2:A50))   #VALUE! (array argument)
+=TEXTJOIN(";",TRUE,Autofill!A2:A50&"~"&Autofill!B2:B50)         computed argument (#VALUE!, or one joined row)
+=TEXTJOIN(";",TRUE,IF(Autofill!A2:A50="","",Autofill!A2:A50))   array argument (#VALUE!, or a wrong result)
 ```
 
 **Scenarios are not supported in headless mode.**
