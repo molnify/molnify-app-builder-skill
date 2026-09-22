@@ -30,6 +30,7 @@ Checks for:
 - Non-formula cell content exceeding Excel's 32,767 character limit
 - Autofill SQL using @variable references (not supported)
 - Headless mode with JavaScriptAfterLoad/AfterCalc (ignored in headless)
+- Duplicate metadata keys (other than additionalCSS/additionalJavaScript)
 """
 
 import json
@@ -1150,6 +1151,7 @@ def validate_workbook(filepath):
                 length = len(val)
                 if length >= _CELL_CHAR_LIMIT:
                     label = ''
+                    hint = ''
                     hex_color = get_cell_color_hex(cell)
                     if hex_color and color_matches_molnify(hex_color) == 'metadata':
                         if cell.column >= 2:
@@ -1157,10 +1159,16 @@ def validate_workbook(filepath):
                                                column=cell.column - 1)
                             if key_cell.value:
                                 label = f" (metadata: {key_cell.value})"
+                                key = str(key_cell.value).strip().lower()
+                                if key in ('css', 'additionalcss'):
+                                    hint = " Continue it in additionalCSS cells."
+                                elif key in ('javascript', 'additionaljavascript'):
+                                    hint = (" Continue it in additionalJavaScript"
+                                            " cells.")
                     error(f"{sheet_name}!{cell.coordinate}: cell content "
                           f"is {length:,} characters, exceeding Excel's "
                           f"32,767 character limit{label}. The value "
-                          f"will be truncated.")
+                          f"will be truncated.{hint}")
 
     # --- Check 27: Headless mode incompatibilities ---
     headless_val = meta_values.get('headless')
@@ -1214,6 +1222,18 @@ def validate_workbook(filepath):
                         f"breaks numeric parsing in custom frontend JS. Use "
                         f"the General format and format the value in "
                         f"JavaScript instead.")
+
+    # --- Check 30: Duplicate metadata keys ---
+    meta_keys = {}  # key_lower -> list of (key_str, sheet, coord)
+    for sheet, coord, key_str, _val_cell in _iter_metadata_pairs(wb, colored_cells):
+        meta_keys.setdefault(key_str.lower(), []).append((key_str, sheet, coord))
+    for key_lower, occurrences in meta_keys.items():
+        if len(occurrences) > 1 and key_lower not in (
+                'additionalcss', 'additionaljavascript'):
+            refs = ', '.join(f"{s}!{c}" for _, s, c in occurrences)
+            warning(f"Metadata key '{occurrences[0][0]}' is set "
+                    f"{len(occurrences)} times: {refs}. Which value takes "
+                    f"effect is undefined - keep only one.")
 
     # --- Print results ---
     print(f"=== Validation: {filepath} ===")

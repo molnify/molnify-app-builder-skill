@@ -381,7 +381,7 @@ recalc();
 | `IpRanges` | IP-based access control |
 | `CookieConsentPopup` | Cookie consent |
 
-**Splitting large JavaScript or CSS across cells:** Excel cells have a 32,767-character limit. Custom frontends often exceed this. Use `additionalJavaScript` and `additionalCSS` to split content across several metadata cells - the values are concatenated at load time. For example, put your core framework code in `JavaScript` and your app-specific logic in `additionalJavaScript`. The same approach works in standard (non-headless) apps when templates provide base CSS/JS and individual apps need to extend it.
+**Splitting large JavaScript or CSS across cells:** Excel cells have a 32,767-character limit. Custom frontends often exceed this. Continue `JavaScript` or `CSS` in any number of `additionalJavaScript` or `additionalCSS` cells - the values are joined with a newline in row order at load time, so split between statements or rules. The same approach works in standard (non-headless) apps when templates provide base CSS/JS and individual apps need to extend it.
 
 **Not used in headless mode:** `JavaScriptAfterLoad`, `JavaScriptAfterCalc`, `AutoCalcEnabled`, `EnabledForCalculate`, `EnabledForSave`, `EnabledForReset`, `EnabledForPrint`, `TopBannerHidden`, `HeaderHidden`, `InputPanelSmall`, `InputPanelFixed`, `PanelsFixed`, `OutputBoxPanelHidden`, color metadata (`TopBannerColor`, `ButtonColor`, `PanelHeaderColor`, etc.), `ScenarioTerm`, `Template`, and other UI-specific settings.
 

@@ -6,7 +6,7 @@ Companion to the main reference.
 
 - Molnify uses Bootstrap 3 with a fixed DOM structure - you override, not replace
 - Fonts come from Google Fonts (loaded via `HeaderFont`/`BodyFont` metadata)
-- CSS is injected via the `CSS` metadata cell - one big block, no separate files
+- CSS is injected via the `CSS` metadata cell, followed by any number of `additionalCSS` cells, no separate files
 - Layout restructuring requires `JavaScriptAfterLoad` for DOM manipulation
 - The default 50/50 two-column split is a starting point, not a constraint - if a user asks for a "modern", "dashboard", or "professional" design, assume layout changes are needed
 

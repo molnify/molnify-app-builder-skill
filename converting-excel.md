@@ -24,6 +24,7 @@ This outputs all cell values, formulas, colors, conditional formatting, charts, 
 5. **Check formulas for compatibility** - Modern Excel (365/2021) saves newer functions with internal `_xlfn.` or `_xludf.` prefixes (e.g., `_xlfn.IFS`, `_xlfn.XLOOKUP`). openpyxl preserves these prefixes in formula strings, and Molnify's calculation engine cannot parse them. You must address these before uploading:
    - **Strip the prefix** for supported functions: `IFS`, `SWITCH`, `TEXTJOIN`, `CONCAT`, `MAXIFS`, `MINIFS`, `AVERAGEIFS`, `CEILING.MATH`, `FLOOR.MATH`, `IFNA`, `NUMBERVALUE`, `DAYS`. Simply remove the `_xlfn.` part (e.g., `_xlfn.IFS(...)` → `IFS(...)`).
    - **Rewrite** unsupported functions: `XLOOKUP` → `INDEX`/`MATCH`, `FILTER` → manual ranges or helper columns, `SORT`/`UNIQUE` → sorted data ranges, `LET`/`LAMBDA` → intermediate cells or restructured formulas.
+   - **Replace structured references** (`Table1[Col]`, `Table1[[#This Row],[Col]]`) with plain cell ranges. An Excel Table name can't be an autofill target either; use a defined name.
    - The `molnify_validate.py` script detects `_xlfn.`/`_xludf.` prefixes and reports them as errors.
 
 ## Step 2: Create a Metadata Sheet

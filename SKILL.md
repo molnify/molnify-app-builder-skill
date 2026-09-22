@@ -3,7 +3,7 @@ name: molnify-app-builder
 description: "Build, convert, validate, and style Molnify apps: spreadsheet-driven web applications where Excel or Google Sheets formulas drive the logic and colored cells define inputs, outputs, charts, and actions. Use when creating a Molnify app from scratch, converting an existing spreadsheet into one, validating or styling an app, or answering questions about how Molnify apps work."
 license: Apache-2.0
 metadata:
-  version: 1.1.5
+  version: 1.1.7
 ---
 
 # Molnify App Development Guide
@@ -201,10 +201,10 @@ To create a dropdown: create a named range with the list values, add Data Valida
 ### Numeric Display Options
 | Option | Description | Example |
 |--------|-------------|---------|
-| `min=N` | Minimum allowed value | `UI: min=0` |
+| `min=N` | Minimum allowed value, enforced when typing pauses (can snap a half-typed number) | `UI: min=0` |
 | `max=N` | Maximum allowed value | `UI: max=100` |
 | `delta=N` | Increment step for +/- buttons and slider ticks | `UI: delta=0.5` |
-| `multiplier=N` | Display multiplier | `UI: multiplier=100` (shows 0.5 as 50) |
+| `multiplier=N` | Display multiplier, also applied to `min`/`max`/`delta` | `UI: multiplier=100` (shows 0.5 as 50) |
 | `prefix=X` | Display prefix (inputs only) | `UI: prefix=$` |
 | `postfix=X` | Display suffix (inputs only) | `UI: postfix=%` |
 | `decimals=N` | Number of decimal places | `UI: decimals=2` |
@@ -218,7 +218,7 @@ To create a dropdown: create a named range with the list values, add Data Valida
 | `noTitle` | Hide the label | `UI: noTitle` |
 | `class=X` | Custom CSS class - applied to `.panel-body`, not the outer `.panel`. For inputs, Molnify appends `-form-group-class` (e.g., `class=half-left` → `.half-left-form-group-class`) | `UI: class=my-custom-class` |
 | `dividerName=X` | Add section divider above | `UI: dividerName=Personal Details` |
-| `tab=X` | Start a new tab - all following inputs are placed in this tab until the next `tab=`. Only set on the **first** input of each tab, not on every input. | `UI: tab=Advanced` |
+| `tab=X` | Start a new tab - all following inputs are placed in this tab until the next `tab=`. Only set on the **first** input of each tab, not on every input. Inputs before the first `tab=` are shown on every tab. | `UI: tab=Advanced` |
 
 ### Conditional Display
 Show/hide inputs and outputs based on variable values:
@@ -352,8 +352,10 @@ Charts and tables use **blue cells** for data values only.
 ### Chart Series Styling
 Style individual series:
 ```
-UI: lineChart;series1.color=#FF0000;series2.color=#00FF00;series1.strokewidth=3;series2.dashedline;series1.showarea
+UI: lineChart;series0.color=#FF0000;series1.color=#00FF00;series0.strokewidth=3;series1.dashedline;series0.showarea
 ```
+
+`N` counts from 0: `series0` is the first series. On pie and donut charts `N` is the slice.
 
 | Property | Description |
 |----------|-------------|
@@ -727,7 +729,7 @@ Metadata cells (purple) configure application-wide settings.
 ### User Management
 | Property | Description |
 |----------|-------------|
-| `Users` | Comma-separated emails or domains (`*@company.com`) to restrict access. If not set, app is public. |
+| `Users` | Comma-separated emails or domains (`*@company.com`) to restrict access. `any` or `*@*` allows any signed-in user. If not set, or `*`, app is public. |
 | `SuperUsers` | Comma-separated emails with elevated permissions (can manage users and managers) |
 | `Managers` | Comma-separated emails who can manage regular users and view all scenarios |
 | `Realms` | Comma-separated realm names (e.g., "Europe,Asia,Americas") - creates a realm selector dropdown |
@@ -739,7 +741,7 @@ Metadata cells (purple) configure application-wide settings.
 | Property | Description |
 |----------|-------------|
 | `CSS` | Complete custom CSS |
-| `additionalCSS` | CSS appended after the main `CSS` value. Use when a template provides base CSS and you want to extend it without replacing it. Also useful when CSS exceeds a single cell's 32,767-character limit - split across `CSS` and `additionalCSS`. **Repeatable:** an app can have as many `additionalCSS` rows as it needs; each is appended in the order the rows appear, so place them after the `CSS` row. |
+| `additionalCSS` | CSS appended after the main `CSS` value. Use when CSS exceeds a single cell's 32,767-character limit - split across `CSS` and `additionalCSS`. **Repeatable:** an app can have as many `additionalCSS` rows as it needs; each is appended in the order the rows appear, so place them after the `CSS` row. |
 | `TopBannerColor` | Top banner color. Paints the **top banner** (`#header`, the fixed full-width bar above the app), via `#molnifyAppBody .container-fluid`. This is a different element from `#appHeaderRow` (the app title bar inside `#content`) - it does not color that. |
 | `HeaderTextColor` | Colors the **app title** at the top of the content area (`h1#appHeader`/`#pAppTitle`, via `#molnifyAppBody h1`) - not the top banner (a logo, no text). The title sits on the page background, light by default, so keep it **dark**; only go light for a dark-background app. |
 | `PanelHeaderColor` | Panel header color |
@@ -784,7 +786,7 @@ Metadata cells (purple) configure application-wide settings.
 | Property | When it runs | Description |
 |----------|--------------|-------------|
 | `JavaScript` | Page load (early) | Custom JS code, runs before app is fully interactive |
-| `additionalJavaScript` | Page load (early) | JavaScript appended after the main `JavaScript` value. Use when a template provides base JS and you want to extend it, or when JS exceeds a single cell's 32,767-character limit - split across `JavaScript` and `additionalJavaScript`. **Repeatable:** an app can have as many `additionalJavaScript` rows as it needs; each is appended in the order the rows appear, so place them after the `JavaScript` row. |
+| `additionalJavaScript` | Page load (early) | JavaScript appended after the main `JavaScript` value. Use when JS exceeds a single cell's 32,767-character limit - split across `JavaScript` and `additionalJavaScript`. **Repeatable:** an app can have as many `additionalJavaScript` rows as it needs; each is appended in the order the rows appear, so place them after the `JavaScript` row. |
 | `JavaScriptAfterLoad` | Page load (late) | JS to run after app fully loads and initial calculation completes |
 | `JavaScriptAfterCalc` | Every calculation | JS to run after each calculation (including initial load) |
 
@@ -853,8 +855,16 @@ function saveToken() {
 | `CustomLogOutURL` | - | URL to redirect to after user logs out |
 | `HeadHTML` | - | Raw HTML injected into `<head>` - use for CDN `<script>` or `<link>` tags |
 | `Template` | - | Apply a built-in template |
-| `OnlyIncludeSheet` | - | Only parse the named sheet (ignores all other sheets) |
+| `OnlyIncludeSheet` | - | Delete all sheets except these (comma-separated) |
 | `calcTimerSeconds` | - | Auto-recalculate every N seconds (minimum 0.5). Sets up `setInterval(calculateButton, N*1000)`. |
+
+---
+
+## Supported Functions
+
+Formulas can only use these functions:
+
+ABS, ACOS, ACOSH, ADDRESS, AND, AREAS, ASIN, ASINH, ATAN, ATAN2, ATANH, AVEDEV, AVERAGE, AVERAGEA, AVERAGEIF, AVERAGEIFS, BIN2DEC, CEILING, CEILING.MATH, CEILING.PRECISE, CHAR, CHOOSE, CLEAN, CODE, COLUMN, COLUMNS, COMBIN, CONCATENATE, CORREL, COS, COSH, COUNT, COUNTA, COUNTBLANK, COUNTIF, COUNTIFS, COVAR, COVARIANCE.P, COVARIANCE.S, CUSTOMSQL, DATE, DATEVALUE, DAVERAGE, DAY, DAYS, DAYS360, DBLOOKUP, DCOUNT, DCOUNTA, DEC2BIN, DEC2HEX, DEGREES, DELTA, DEVSQ, DGET, DMAX, DMIN, DOLLAR, DOLLARDE, DOLLARFR, DPRODUCT, DSTDEV, DSTDEVP, DSUM, DVAR, DVARP, EDATE, EOMONTH, ERROR.TYPE, EVAL, EVEN, EXACT, EXP, FACT, FACTDOUBLE, FALSE, FILTERJSON, FILTERXML, FIND, FIXED, FLOOR, FLOOR.MATH, FLOOR.PRECISE, FORECAST, FORECAST.LINEAR, FREQUENCY, FV, GCD, GEOMEAN, HEX2DEC, HLOOKUP, HOUR, HYPERLINK, IF, IFERROR, IFNA, IFS, IMAGINARY, IMREAL, INDEX, INDIRECT, INT, INTERCEPT, IPMT, IRR, ISBLANK, ISERR, ISERROR, ISEVEN, ISLOGICAL, ISNA, ISNONTEXT, ISNUMBER, ISODD, ISREF, ISTEXT, LARGE, LCM, LEFT, LEN, LN, LOG, LOG10, LOOKUP, LOWER, MATCH, MAX, MAXA, MAXIFS, MDETERM, MEDIAN, MID, MIN, MINA, MINIFS, MINUTE, MINVERSE, MIRR, MMULT, MOD, MODE, MONTH, MROUND, NA, NETWORKDAYS, NORM.DIST, NORM.INV, NORM.S.DIST, NORM.S.INV, NORMDIST, NORMINV, NORMSDIST, NORMSINV, NOT, NOW, NPER, NPV, NUMBERVALUE, OCT2DEC, ODD, OFFSET, OR, PEARSON, PERCENTILE, PERCENTRANK, PERCENTRANK.EXC, PERCENTRANK.INC, PI, PMT, POISSON, POISSON.DIST, POISSONADVANCED, POWER, PPMT, PRODUCT, PROPER, PV, QUOTIENT, RADIANS, RAND, RANDBETWEEN, RANK, RATE, REPLACE, REPT, RIGHT, ROMAN, ROUND, ROUNDDOWN, ROUNDUP, ROW, ROWS, SEARCH, SECOND, SIGN, SIN, SINGLE, SINH, SLOPE, SMALL, SOLVER, SOLVERBI, SOLVERSTEP, SQRT, SQRTPI, STANDARDIZE, STDEV, STDEV.P, STDEV.S, STDEVA, STDEVP, STDEVPA, SUBSTITUTE, SUBTOTAL, SUM, SUMIF, SUMIFS, SUMPRODUCT, SUMSQ, SUMX2MY2, SUMX2PY2, SUMXMY2, SWITCH, T, T.DIST, T.DIST.2T, T.DIST.RT, TAN, TANH, TDIST, TEXT, TEXTJOIN, TIME, TIMEVALUE, TODAY, TRANSPOSE, TREND, TRIM, TRUE, TRUNC, UPPER, VALUE, VAR, VAR.P, VAR.S, VARA, VARP, VARPA, VLOOKUP, WEEKDAY, WEEKNUM, WORKDAY, WORKDAY.INTL, XMLSERVICE, YEAR, YEARFRAC
 
 ---
 
@@ -882,4 +892,4 @@ Use `var=variableName` to store validation dropdown options in a JavaScript vari
 
 ---
 
-*This is v1.1.5 of the skill, published 2026-09-22. Installed copies are version-pinned; to update to the latest release, re-run `npx skills add https://app.molnify.com` (see `README.md`).*
+*This is v1.1.7 of the skill, published 2026-09-22. Installed copies are version-pinned; to update to the latest release, re-run `npx skills add https://app.molnify.com` (see `README.md`).*

@@ -40,6 +40,7 @@ Database tables can be created and managed declaratively via purple metadata cel
 - Use bare type names only (e.g. `DECIMAL`, not `DECIMAL(10,2)`). Default lengths are applied automatically: VARCHAR(255), CHAR(255), BINARY(255), VARBINARY(255), DECIMAL(10,2). Parameterized types are rejected by the backend.
 - TIMESTAMP/DATETIME require an explicit `default` (e.g. `"CURRENT_TIMESTAMP"`)
 - TEXT, TINYTEXT, MEDIUMTEXT, BLOB, TINYBLOB, MEDIUMBLOB, and JSON types cannot have a `default` value
+- A `default` may only contain `a-z`, `å`, `ä`, `ö` (any case), digits, spaces, `.`, `-` and `_`
 - System columns (recordId, _molnify_*) are created automatically - do not declare them
 
 Valid column types (these are MySQL types - do NOT use generic names like "STRING" or "NUMBER"):
@@ -101,11 +102,7 @@ The `insertrow` action auto-adds `data_` if missing, but the other contexts do n
 
 ### Date inputs and database storage
 
-Date inputs (with `UI: date`) are stored as **formatted text strings**, not as SQL date types or Excel serial numbers. When writing date values to a database:
-
-- Use `VARCHAR` column type, not `DATE` or `DATETIME`
-- The value is stored as the formatted string (e.g., `"2024-03-15"`)
-- If you need date sorting/filtering in SQL, you can use `STR_TO_DATE()` in queries
+A date input (`UI: date`) sends an **Excel serial number** (e.g. `46281` for 2026-09-16), and that is what `addrecord` and `insertrow` store. To store a readable date, write it through a formula into a `VARCHAR` column, e.g. `.col: =TEXT(App!B5,"YYYY-MM-DD")` in `insertrow`. Use `STR_TO_DATE()` in queries if you need date sorting/filtering.
 
 ---
 
@@ -126,7 +123,7 @@ autofill.clients: SELECT name, id FROM `data_my-app_clients`
 **How it works:**
 - When the app calculates, the named range is **cleared first** (removes stale data from previous calculations), then the SQL query runs and fills it row by row, column by column
 - Autofills execute **before** all other calculations, so outputs and formulas can reference the populated data
-- If the query returns fewer rows than the range, remaining cells stay empty (they were cleared). **Note:** these "empty" cells hold the value `""` (empty string), so `COUNTA` will count them. Use `COUNTIF(range,"<>")` instead
+- If the query returns fewer rows than the range, remaining cells stay empty (they were cleared). **Note:** these "empty" cells hold the value `""` (empty string), so `COUNTA` and `COUNTIF(range,"<>")` count them. Use `ROWS(range)-COUNTBLANK(range)` instead
 - If the query returns more rows than the range, extra rows are silently skipped
 - All query results are retrieved as strings. Values that look numeric (including comma-decimal like `"1,5"` → `1.5`) are stored as numbers; everything else is stored as text
 

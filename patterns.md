@@ -380,7 +380,7 @@ CSS:
 - The `addrecord` action automatically inserts (if `recordId` is empty) or updates (if `recordId` has a value). Use `idVariable` if your ID column is not named `recordId`.
 - Use `successCalculate: TRUE` so the table refreshes after saving
 - The "New Contact" button can be replaced with a `resetinputs` action to avoid manual `setValueForVariable` calls
-- To add a delete button, create a separate HTTP or SQL action that deletes by `recordId`
+- There is no delete action. To let users remove records, add an `isDeleted` column, set it by saving the record with `addrecord`, and exclude it in the autofill query (`WHERE isDeleted = 0`)
 - For large datasets, add a search input that filters the autofill query dynamically:
   ```
   autofill.contactList: ="SELECT recordId, name, email, phone, company FROM `data_contacts_0` WHERE name LIKE '%" & B10 & "%' ORDER BY recordId DESC LIMIT 50"
