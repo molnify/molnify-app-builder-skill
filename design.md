@@ -24,6 +24,8 @@ AI-generated interfaces converge on the same patterns. They signal "no designer 
 
 ### Typography Tells
 - Inter, Roboto, Open Sans, or system fonts as the primary font
+- Fraunces, Bitter, Karla, or IBM Plex as the primary font
+- Small uppercase, letter-spaced labels above every section and value
 - Monospace used as shorthand for "technical" aesthetic
 - All text centered
 
@@ -31,18 +33,24 @@ AI-generated interfaces converge on the same patterns. They signal "no designer 
 - Cyan/teal on dark background (the "AI dashboard" palette)
 - Purple-to-blue gradients
 - Neon accents on dark backgrounds
+- Cream or warm paper background with a single warm accent (amber, ochre, terracotta or rust)
+- Small muted gray text on a tinted background
 - Pure black (`#000`) and pure white (`#fff`) everywhere
 - Gradient text on headings or metrics
 
 ### Layout Tells
 - Everything in cards with identical padding and rounded corners
 - Identical card grid: icon + heading + text, repeated 3-6 times
+- Inputs in a left column and results in a right column, whatever the content
+- The headline result as a large number in a dark block, with a small label above it
+- Ledger styling: hairline-ruled rows and dotted leaders on a paper-colored background
 - Same spacing everywhere - no rhythm, no grouping
 - Everything centered with no asymmetry
 
 ### Detail Tells
 - Glassmorphism (blur, glow borders) used decoratively
 - Uniform drop shadows on every element
+- A colored bar down one side of an element such as a box, panel or callout to mark it as important or to tag its category
 - Dark mode by default with glowing accents
 
 ### The Test
@@ -103,7 +111,7 @@ Start from the desired mood and audience, then use color wheel relationships:
 - **Red impairs analytical thinking.** In calculation-heavy apps, avoid red as a dominant color. It overloads the prefrontal cortex and reduces rational decision-making. Reserve it for errors and urgent alerts.
 - **Test contrast.** Light text on light backgrounds and dark text on dark backgrounds are both invisible - if you lighten a default dark background, override its text color too.
 
-### Molnify-Specific Defaults to Override
+### Molnify Standard-App Defaults to Override
 
 Molnify's defaults (teal output boxes/buttons, dark headers) are functional but generic - override them with the color metadata properties to match your aesthetic direction. For a cohesive palette, drive everything from CSS variables in the `CSS` metadata:
 
