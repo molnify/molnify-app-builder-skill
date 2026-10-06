@@ -3,7 +3,7 @@ name: molnify-app-builder
 description: "Build, convert, validate, and style Molnify apps: spreadsheet-driven web applications where Excel or Google Sheets formulas drive the logic and colored cells define inputs, outputs, charts, and actions. Use when creating a Molnify app from scratch, converting an existing spreadsheet into one, validating or styling an app, or answering questions about how Molnify apps work."
 license: Apache-2.0
 metadata:
-  version: 1.1.7
+  version: 1.1.8
 ---
 
 # Molnify App Development Guide
@@ -856,6 +856,7 @@ function saveToken() {
 | `HeadHTML` | - | Raw HTML injected into `<head>` - use for CDN `<script>` or `<link>` tags |
 | `Template` | - | Apply a built-in template |
 | `OnlyIncludeSheet` | - | Delete all sheets except these (comma-separated) |
+| `CacheConstantAutofill` | FALSE | TRUE to cache results of autofill queries that read no database table. |
 | `calcTimerSeconds` | - | Auto-recalculate every N seconds (minimum 0.5). Sets up `setInterval(calculateButton, N*1000)`. |
 
 ---
@@ -892,4 +893,4 @@ Use `var=variableName` to store validation dropdown options in a JavaScript vari
 
 ---
 
-*This is v1.1.7 of the skill, published 2026-09-22. Installed copies are version-pinned; to update to the latest release, re-run `npx skills add https://app.molnify.com` (see `README.md`).*
+*This is v1.1.8 of the skill, published 2026-10-06. Installed copies are version-pinned; to update to the latest release, re-run `npx skills add https://app.molnify.com` (see `README.md`).*

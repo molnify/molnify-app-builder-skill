@@ -151,7 +151,7 @@ KNOWN_METADATA_KEYS = {
     'headhtml', 'topbannerhidden', 'headerhidden', 'inputpanelsmall', 'inputpanelfixed',
     'panelsfixed', 'outputboxpanelhidden', 'onlyappnameinpagetitle',
     'clearclipboardatreset', 'clearclipboardatcalc', 'customlogouturl',
-    'onlyincludesheet',
+    'onlyincludesheet', 'cacheconstantautofill',
 }
 
 # Prefixed keys - matched by prefix (case-insensitive)

@@ -148,6 +148,8 @@ autofill.items: ="SELECT name, price FROM data_my-app_items WHERE category = '" 
 - If the query returns zero rows or fails to parse, the range stays cleared with no error shown to the user
 - Queries are **read-only** and the backend does not allow multiple statements in a single query, so SQL injection from user input in dynamic queries is not a practical concern
 
+**Caching queries that read no table:** Set the metadata `CacheConstantAutofill: TRUE` to cache the results of autofill queries that do not read from any database table, such as lists built from literals with `SELECT 'A' AS code UNION ALL SELECT 'B'`. A cached result is reused for the same SQL for up to 48 hours, and dropped earlier if unused for 8 hours. Queries that read a table always run. Do not enable it if such queries use `NOW()`, `CURDATE()`, `CURRENT_TIMESTAMP`, `RAND()`, `UUID()` or other functions whose result changes over time or between calls - the cached value would be returned instead.
+
 **Autofill requires a calculation to populate.** Autofill data (SQL queries and API calls) is only executed during a calculation cycle. Although `AutoCalcEnabled` is TRUE by default, auto-calc only triggers when an input *changes* - it does not run on initial page load unless something triggers a calculation (e.g., inputs with `user.email` or other user context variables that set a value on load). This means apps that rely solely on autofill will appear empty until the user changes an input or manually clicks Calculate.
 
 To fix this, add a `JavaScriptAfterLoad` metadata entry that triggers a calculation on load:
