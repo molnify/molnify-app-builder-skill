@@ -24,15 +24,15 @@ The last row leaves the standard UI altogether. That is a separate decision, not
 | Live formatted preview (invoice, certificate) | [Live Report Preview](#live-report-preview) | HTML output with formula, auto-updates on calc |
 | Printable output | [Print-Optimized Layout](#print-optimized-layout) | CSS `@media print` rules only |
 | Chart type Molnify doesn't support (radar, polar, heatmap) | [Custom Chart (External Library)](#custom-chart-external-library) | HeadHTML loads library, JS renders into a stable canvas |
-| Inline table editing, drag-and-drop, complex table interactions | Headless mode (`Headless: TRUE`) | The calc cycle re-renders Molnify-owned DOM and destroys inline state - see `custom-frontend.md` |
+| Inline table editing, drag-and-drop, complex table interactions | Headless mode (`Headless: TRUE`) | The calc cycle may rebuild Molnify-owned DOM and destroy inline state - see `custom-frontend.md` |
 
 ### The key question for table-heavy apps
 
 If the app involves a data table with row-level actions, ask: **does the user edit data inside the table, or in a separate form?**
 
-- **Separate form** → Master-Detail pattern. The table is a read-only Molnify output that re-renders safely on each calculation. Editing happens in standard inputs. This is the standard-UI answer for most CRUD apps.
+- **Separate form** → Master-Detail pattern. The table is a read-only Molnify output, so it does not matter when it is rebuilt. Editing happens in standard inputs. This is the standard-UI answer for most CRUD apps.
 
-- **Inside the table** (contenteditable cells, inline dropdowns, edit/save/cancel buttons per row) → no standard-UI pattern fits. Molnify re-renders its own DOM on every calculation, destroying inline editing state, event handlers, and injected elements. Own the DOM instead: `custom-frontend.md`, plus the "DOM Lifecycle" section in `advanced-topics.md`.
+- **Inside the table** (contenteditable cells, inline dropdowns, edit/save/cancel buttons per row) → no standard-UI pattern fits. Molnify may rebuild its own DOM on any calculation, destroying inline editing state, event handlers, and injected elements. Own the DOM instead: `custom-frontend.md`, plus the "DOM Lifecycle" section in `advanced-topics.md`.
 
 ---
 
@@ -51,19 +51,20 @@ Guide users through a sequence of steps with prev/next navigation and a progress
 app = AppBuilder("wizard-demo", "Application Form")
 
 # Step 1: Personal info - only first input gets tab=
-app.add_input("Full Name", "", ui="tab=Step 1;variable=fullName;placeholder=Enter your name")
-app.add_input("Email", "", ui="variable=email;placeholder=email@company.com")
+row_name = app.add_input("Full Name", "", ui="tab=Step 1;variable=fullName;placeholder=Enter your name")
+row_email = app.add_input("Email", "", ui="variable=email;placeholder=email@company.com")
 app.add_input("Phone", "", ui="variable=phone;placeholder=+46 70 123 4567")
 
 # Step 2: Details - tab= only on first input
-app.add_input("Department", "Engineering", ui="tab=Step 2;dropdown;variable=department")
+row_dept = app.add_input("Department", "Engineering", ui="tab=Step 2;variable=department",
+                         options=["Engineering", "Sales", "Marketing"])
 app.add_input("Start Date", "", ui="date;variable=startDate")
 app.add_input("Notes", "", ui="textarea;variable=notes")
 # Hidden step tracker - no tab=, stays in Step 2
 app.add_input("Step", "0", ui="hidden;variable=wizardStep")
 
 # Step 3: Review (output with formula - recalculates when inputs change)
-app.add_output("Review", '="<h4>Please confirm:</h4><p><b>Name:</b> "&B1&"</p><p><b>Email:</b> "&B2&"</p><p><b>Department:</b> "&B4&"</p>"',
+app.add_output("Review", f'="<h4>Please confirm:</h4><p><b>Name:</b> "&B{row_name}&"</p><p><b>Email:</b> "&B{row_email}&"</p><p><b>Department:</b> "&B{row_dept}&"</p>"',
                ui="tab=Step 3;html;amongInputs;hideCopy")
 ```
 
@@ -151,7 +152,7 @@ CSS:
 **Tips:**
 - The review step uses an output (not an input) so it recalculates when inputs change. `amongInputs` places it in the input panel, `hideCopy` removes the copy button
 - Use `window.functionName = function(...)` for functions called from inline `onclick` handlers - regular `function` declarations inside `JavaScriptAfterLoad` are not accessible from inline handlers
-- Use `$tabs.eq(cur).click()` to switch tabs - `.tab('show')` causes a jQuery error on Molnify's tab links
+- Use `$tabs.eq(cur).click()` to switch tabs
 - Use `css('visibility', ...)` instead of `.toggle()` on the Previous button so the Next button stays right-aligned on step 1
 - To add validation before advancing, check values in `wizardNav()` and show an alert if incomplete
 - For a final submit action, check if `cur === stepCount - 1` in `wizardNav(1)` and call `performActionWithName('submit')` instead of advancing
@@ -311,7 +312,6 @@ app.add_action({
 app.add_metadata("RecordTableName", "data_contacts_0")
 app.add_metadata("DataTable.0", '{"columns":{"name":"VARCHAR","email":"VARCHAR","phone":"VARCHAR","company":"VARCHAR"}}')
 app.add_metadata("autofill.contactList", "SELECT recordId, name, email, phone, company FROM `data_contacts_0` ORDER BY recordId DESC LIMIT 50")
-app.add_metadata("JavaScriptAfterLoad", "calculateButton();")
 ```
 
 The table output uses blue cells with formulas that reference the autofill range. Use `IF` to return `""` for empty rows so Molnify auto-hides them:
@@ -361,6 +361,8 @@ window.clearForm = function() {
   setValueForVariable('company', '');
   $('.out-table tbody tr').removeClass('selected-row');
 };
+
+calculateButton();
 ```
 
 **Metadata - CSS:**
@@ -465,7 +467,8 @@ Show or hide entire form sections based on a controlling dropdown. Good for insu
 app = AppBuilder("claim-form", "Insurance Claim Form")
 
 # Common fields
-app.add_input("Claim Type", "Vehicle", ui="dropdown;variable=claimType;dividerName=Claim Information")
+app.add_input("Claim Type", "Vehicle", ui="variable=claimType;dividerName=Claim Information",
+              options=["Vehicle", "Property", "Health"])
 app.add_input("Date of Incident", "", ui="date;variable=incidentDate")
 app.add_input("Description", "", ui="textarea;variable=description")
 
@@ -475,13 +478,15 @@ app.add_input("Registration Number", "",
 app.add_input("Vehicle Make/Model", "",
     ui="variable=vehicleMake;showIfVariable=claimType;showIfValue=Vehicle;resetWhenHidden")
 app.add_input("Damage Location", "Front",
-    ui="dropdown;variable=damageLocation;showIfVariable=claimType;showIfValue=Vehicle;resetWhenHidden")
+    ui="variable=damageLocation;showIfVariable=claimType;showIfValue=Vehicle;resetWhenHidden",
+    options=["Front", "Rear", "Side"])
 
 # Property section - only shown when claimType = "Property"
 app.add_input("Property Address", "",
     ui="variable=propAddress;dividerName=Property Details;showIfVariable=claimType;showIfValue=Property;resetWhenHidden")
 app.add_input("Property Type", "House",
-    ui="dropdown;variable=propType;showIfVariable=claimType;showIfValue=Property;resetWhenHidden")
+    ui="variable=propType;showIfVariable=claimType;showIfValue=Property;resetWhenHidden",
+    options=["House", "Apartment", "Commercial"])
 app.add_input("Estimated Damage ($)", 0,
     ui="variable=propDamage;min=0;showIfVariable=claimType;showIfValue=Property;resetWhenHidden")
 
@@ -501,14 +506,14 @@ app.add_input("Signature", "", ui="signature;variable=claimSignature")
 
 **Multiple conditions:**
 
-To show a field only when *two* conditions are met (e.g., Vehicle AND damage location is Front), chain conditions on a hidden output:
+To show a field only when *two* conditions are met (e.g., Vehicle AND damage location is Front), chain conditions on a hidden output.
 ```
-Show front details?  [RED]  =IF(AND(claimType="Vehicle", damageLocation="Front"), "yes", "no")   hidden;variable=showFrontDetails
+Show front details?  [RED]  =IF(AND(B1="Vehicle", B7="Front"), "yes", "no")   hidden;variable=showFrontDetails
 Front Photo          [GREEN] ""   fileupload;showIfVariable=showFrontDetails;showIfValue=yes;resetWhenHidden
 ```
 
 **Tips:**
-- For dropdowns, set up data validation lists in Excel for each dropdown
+- For dropdowns, pass `options=` to `add_input()`; `ui="dropdown"` alone gives a dropdown with no list
 - If you have many conditional sections, consider using the multi-step wizard pattern instead - one section per step, with the controlling dropdown on step 1
 - Test with `resetWhenHidden` to verify that hidden values are properly cleared before saving
 
@@ -623,7 +628,7 @@ Render chart types that Molnify doesn't support natively (radar, polar area, hea
 - `JavaScriptAfterLoad` creates a `<canvas>` as a sibling of `.out-html` (not inside it) and initializes the chart
 - `JavaScriptAfterCalc` reads input values via `getValueForVariable()` and updates the chart data
 
-**Why the canvas must be outside `.out-html`:** Molnify re-renders HTML output content on every calculation, replacing the innerHTML of `.out-html`. A canvas inside it would be destroyed and recreated each time, losing the Chart.js instance and causing the chart to re-animate. Placing the canvas as a sibling in the same `.panel-body` keeps it stable across calculations.
+**Why the canvas must be outside `.out-html`:** Molnify may replace the innerHTML of `.out-html` on any calculation. A canvas inside it would then be destroyed and recreated, losing the Chart.js instance and causing the chart to re-animate. Placing the canvas as a sibling in the same `.panel-body` keeps it stable across calculations.
 
 **App structure:**
 ```python

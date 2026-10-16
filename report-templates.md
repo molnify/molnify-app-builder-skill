@@ -17,17 +17,17 @@ The `generatereport` action supports multiple template engines. Set the engine v
 
 All engines receive the same data, but consume it differently (see engine-specific sections below).
 
-**Inputs and outputs** - referenced by variable name (if set via `UI: variable=X`) or cell reference (e.g. `Sheet1_B2`):
+**Inputs and outputs** - referenced by variable name (if set via `UI: variable=X`) or cell reference (e.g. `Sheet1!B2`):
 ```
 inputs.customerName              Single input value
 outputs.totalAmount              Single output value
-inputs.Sheet1_B2                 By cell reference (dots replaced with underscores)
+inputs.Sheet1!B2                 By cell reference
 ```
 
-**Named ranges** - single-cell ranges become scalar properties, multi-row ranges become arrays of objects:
+**Named ranges** - single-cell ranges become scalar properties. For rows, use an Excel table: it becomes an array of objects keyed by its header row. A multi-cell named range that is not a table is left out.
 ```
 namedRanges.companyName          Single named range value
-namedRanges.orderItems           Array of {col1: val, col2: val, ...} objects
+namedRanges.orderItems           Excel table: array of {header1: val, header2: val, ...} objects
 ```
 
 **Charts** - rendered as SVG strings from the app's chart outputs.
@@ -40,7 +40,7 @@ molnify.appId                    Application ID
 molnify.template                 Template name
 ```
 
-**File uploads** - inputs with `UI: fileupload` produce an array with `url` and `url_full` properties.
+**File uploads** - an input with `UI: fileupload` holds its file URLs comma-separated in the main variable, and an `_array` suffix variant lists them as objects with a `url` property. Use `url`: it is already the full-size file, and `url_full` points to a file that does not exist.
 
 **Multiple select** - inputs with `UI: multiple` produce a semicolon-separated string in the main variable and an `_array` suffix variant with individual values.
 
@@ -62,13 +62,13 @@ Uses standard [Mustache](https://mustache.github.io/mustache.5.html) syntax. The
 
 <!-- File uploads -->
 {{#inputs.myUpload_array}}
-  <img src="{{url_full}}" />
+  <img src="{{url}}" />
 {{/inputs.myUpload_array}}
 
-<!-- Conditionals -->
-{{#inputs.showDetails}}
+<!-- Conditionals: any non-empty string renders, including "FALSE" -->
+{{#outputs.details}}
   <p>Details: {{outputs.details}}</p>
-{{/inputs.showDetails}}
+{{/outputs.details}}
 ```
 
 For charts, you can either embed the app's SVG chart directly via `{{{charts.X}}}` (identical look, but zoom/proportions may be off in PDF), or use a JavaScript charting library like Chart.js to render charts from the data.
@@ -85,9 +85,9 @@ Processed by the poi-tl engine - **not** by Mustache. Uses poi-tl placeholder sy
 
 **What variables are available in DOCX templates:**
 - Inputs/outputs with `variable=X` → available as `{{X}}`
-- Inputs/outputs without a variable → available by cell reference, e.g. `{{Sheet1!B2}}`
+- Inputs/outputs without a variable cannot be referenced: their key is the cell reference (`Sheet1!B2`), and poi-tl tag names allow only letters, digits, `_` and `.`
 - Single-cell named ranges → available by range name, e.g. `{{companyName}}`
-- Multi-row named ranges → available as table data via `{{#rangeName}}`
+- Excel tables → available as table data via `{{#tableName}}`
 - If names collide, later entries overwrite earlier ones (processing order: inputs → outputs → named ranges)
 
 | Syntax | Purpose | Example |
@@ -97,10 +97,10 @@ Processed by the poi-tl engine - **not** by Mustache. Uses poi-tl placeholder sy
 | `{{#variable}}` | Insert table data (NOT a conditional - see note below) | `{{#orderItems}}` |
 
 - Placeholder text inherits formatting from the template (bold, color, size, font)
-- **Automatic image detection:** If a variable's value is a web URL ending in `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, or `.svg`, or a data URL (`data:image/png;base64,...`), it is automatically rendered as an image - even with plain `{{variable}}` syntax. If it fails to load, a warning is logged and the value is skipped
+- **Images need the alt-text method or `{{@variable}}`.** A plain `{{variable}}` whose value is an image URL or data URL prints an object name, not the image
 - **Preferred: alt-text method.** Insert a placeholder image in the DOCX and set its alt text to `{{variable}}` (without the `@`). poi-tl replaces the image at render time, preserving the placeholder image's size and position. This is preferred over `{{@variable}}` because it gives control over image dimensions/layout, and if the variable is empty or unmatched the placeholder image simply stays instead of crashing
 - **Alternative: `{{@variable}}` in text.** Simpler to set up but offers no size control, and **crashes** on empty/invalid values. If you must use `{{@}}`, ensure the variable always has a valid value (e.g., use a hidden output with a fallback transparent 1x1 pixel data URL - see code snippet below)
-- Unmatched text placeholders (`{{variable}}`) are **silently removed** (no error, just blank)
+- Unmatched text placeholders (`{{variable}}`) are left in the output as literal text
 - Charts embedded in the template document are automatically updated with app output data
 
 **Table styling via action properties:**
@@ -151,7 +151,7 @@ if (sigData && sigData !== '\u00A0' && sigData !== sigImg) {
     }
   };
   // jSignature provides SVG export via getData('svgbase64')
-  var svgData = $('.signature [variable="signatur"]').jSignature('getData', 'svgbase64');
+  var svgData = $('[variable="signatur"]').jSignature('getData', 'svgbase64');
   img.src = 'data:image/svg+xml;base64,' + svgData[1];
 }
 ```
@@ -163,7 +163,7 @@ This requires two inputs: `signatur` (the signature input, `UI: signature;variab
 When using `{{@variable}}` for optional images, use a hidden output with a fallback formula to prevent crashes on empty values:
 
 ```
-Formula: =IF(B5="", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVQI12NgAAIABQABNjN9GQAAAAlwSFlzAAAWJQAAFiUBSVIk8AAAAA0lEQVQI12P4z8BQDwAEgAF/QualIQAAAABJRU5ErkJggg==", B5)
+Formula: =IF(B5="", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNgAAIAAAUAAen63NgAAAAASUVORK5CYII=", B5)
 UI: hidden;variable=safeImageUrl
 ```
 
@@ -186,6 +186,6 @@ Processed server-side - **not** by Mustache. No Mustache syntax. Data from the a
 
 ## PDF Output Notes
 
-**Filenames:** the download filename comes from the action's `fileName` via `Content-Disposition`. Non-ASCII names (e.g. Cyrillic) are not honored - the browser falls back to a generic name like `pdf.pdf`. **Use an ASCII filename.**
+**Filenames:** the download filename is the action's `fileName` reduced to ASCII letters and digits: accents are dropped and spaces, hyphens and other characters removed (`Rapport för Åsa` → `RapportforAsa.pdf`, `Отчёт` → `.pdf`).
 
-**Fonts (HTML engine):** The HTML engine renders a web font loaded via `<link>`/`@font-face` URL, but does **not embed** the font file into the generated PDF. The PDF then depends on the font being available wherever it is opened, and silently falls back when it isn't - dropping glyphs the fallback font lacks, which is a real problem for non-Latin scripts. To make the font travel inside the PDF, **base64-encode the font file and inline it as a `data:` URI in `@font-face`** so it is embedded. It is tedious but reliable, and worth it whenever a specific font or non-Latin glyphs must render correctly. (The DOCX/XLSX engines render through a separate converter and use only fonts installed in the render environment - web fonts do not apply there.)
+**Fonts (HTML engine):** Web fonts are embedded in the generated PDF, whether loaded via `<link>`, a font file in the template, or a `data:` URI. (The DOCX/XLSX engines render through a separate converter and use only fonts installed in the render environment - web fonts do not apply there.)

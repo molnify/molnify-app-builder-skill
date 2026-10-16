@@ -37,7 +37,7 @@ Two ready-made scripts are provided for converting Excel files into Molnify apps
 | `add_chart(title, chart_type, series, labels, ui_extra=None)` | `None` | `series` is `{name: [values]}`, `labels` a list; `ui_extra` is appended after `chart_type` |
 | `add_action(properties)` | `None` | Dict of key → value; must include `type` |
 | `add_metadata(key, value)` | `None` | Written in call order; repeat `additionalCSS`/`additionalJavaScript` to split long values |
-| `add_model_sheet(name)` | `None` | Sheet with `molnifyIgnore` in A1 |
+| `add_model_sheet(name)` | `None` | Sheet with `molnifyIgnore` in A1, written for you. Row 1 is not available: begin content, header rows included, at row 2 |
 | `set_cell(address, value)` | `None` | `"Sheet!B2"`, `"'My Sheet'!B2"`, or `"B2"` (App sheet). Raises on A1 of a model sheet |
 | `add_named_range(name, sheet, cell_range)` | `None` | e.g. `("items", "Autofill", "A2:C20")` |
 | `save(filepath)` | `None` | Also converts inline strings |
@@ -49,9 +49,59 @@ Non-formula strings over 32,767 characters raise `ValueError` in `add_metadata` 
 - **App sheet columns:** title in A, colored value in B, UI in C.
 - **Inputs and `among_inputs` outputs:** from row 1 in call order. An item whose `ui` contains `tab=` or `dividerName=` gets a blank row before it, unless it is the first item.
 - **Other outputs:** after one blank row, in call order. The row returned for one of these assumes no inputs or `among_inputs` outputs are added after it.
-- **Charts:** after one blank row, then a blank row after each chart. Header row: title in A, series names from B, chart UI in the next column. Then one row per label: label in A, blue values from B.
-- **Actions:** after one blank row, each as key in A and yellow value in B, with a blank row between actions.
+- **Charts:** after one blank row, or two when inputs but no other outputs precede them, then a blank row after each chart. Header row: title in A, series names from B, chart UI in the next column. Then one row per label: label in A, blue values from B.
+- **Actions:** after one blank row (two after a chart), each as key in A and yellow value in B, with a blank row between actions.
 - **`set_cell` runs last:** its cells are written after the layout, so an address on the App sheet overwrites what AppBuilder placed there.
+
+**Complete example:**
+
+```python
+from openpyxl import load_workbook
+from molnify_builder import AppBuilder, _convert_inline_strings
+
+app = AppBuilder("loan-calc", "Loan Calculator")  # writes ID and Name; add_metadata never replaces a key
+
+# value: a str starting with "=" is a formula, anything else a literal. ui: one ";"-separated string.
+r_amount = app.add_input("Amount", 200000, ui="slider;min=10000;max=1000000;delta=10000")
+r_years = app.add_input("Years", 25, ui="min=1;max=40")
+# options= adds the list and its validation, and prepends "dropdown" to ui unless ui contains
+# "dropdown" or "select" anywhere (placeholder=Select... counts). ui="dropdown" alone has no list.
+r_type = app.add_input("Rate type", "Fixed", options=["Fixed", "Variable"])
+# tab= and dividerName= put a blank row before the item, so build formulas from returned rows.
+app.add_input("Notes", "", ui="textarea;dividerName=Extra")
+
+# Model sheets return nothing: fill them with set_cell from row 2 (A1 holds molnifyIgnore).
+# set_cell takes one cell, uppercase column, no $; quote sheet names that aren't letters, digits and _.
+# It writes the value only, with no fill, so it cannot make an input or output.
+app.add_model_sheet("Model")
+app.set_cell("Model!A2", "Rate")
+app.set_cell("Model!B2", f'=IF(App!B{r_type}="Fixed",0.045,0.039)')
+
+# Add every input and among_inputs output before other outputs: their returned rows assume none follow.
+app.add_output("Rate", '="<p>Rate: "&TEXT(Model!B2,"0.0%")&"</p>"', ui="html;hideCopy", among_inputs=True)
+r_pay = app.add_output("Monthly payment", f"=PMT(Model!B2/12,App!B{r_years}*12,-App!B{r_amount})",
+                       ui="decimals=0")
+
+app.add_chart("Total cost", "pieChart", labels=["Principal", "Interest"],
+              series={"Cost": [f"=App!B{r_amount}", f"=App!B{r_pay}*App!B{r_years}*12-App!B{r_amount}"]})
+# Keys are written in dict order; values may be formulas.
+app.add_action({"type": "email", "title": "Email me", "to": "me@example.com",
+                "subject": f'="Loan of "&App!B{r_amount}'})
+
+# Named ranges are not validated: the sheet must already exist, and it is only quoted if it has a space.
+app.add_model_sheet("Autofill")
+app.add_named_range("rates", "Autofill", "A2:B20")
+app.add_metadata("autofill.rates", "SELECT name, rate FROM `data_loan-calc_0`")
+app.add_metadata("EnabledForSave", "TRUE")  # save() adds ParseAllSheets itself
+
+app.save("loan-calc.xlsx")  # once: a second save() duplicates the dropdown validations
+
+# For anything AppBuilder has no method for, edit the saved file and convert again.
+wb = load_workbook("loan-calc.xlsx")
+wb["Model"]["B2"].number_format = "0.0%"
+wb.save("loan-calc.xlsx")
+_convert_inline_strings("loan-calc.xlsx")
+```
 
 ## Cell Color Conventions
 

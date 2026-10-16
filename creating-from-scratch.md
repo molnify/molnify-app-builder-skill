@@ -33,7 +33,7 @@ Row N+3: Output 2  → App!B(N+3)
 ...
 ```
 
-**A blank row separates inputs from outputs, and one is added before any item whose `ui` contains `tab=` or `dividerName=`.** Charts and actions follow after additional separator rows.
+**A blank row separates inputs from outputs, and one is added before each input or `among_inputs` output whose `ui` contains `tab=` or `dividerName=`, unless it is the first.** Charts and actions follow after additional separator rows.
 
 ```python
 from molnify_builder import AppBuilder

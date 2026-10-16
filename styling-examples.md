@@ -49,7 +49,7 @@ These layer onto any layout below - apply them on top of a base layout's CSS.
 
 A dark palette that composes onto any layout - drop it into the `CSS` metadata. Use it when the context calls for it (wall display, kiosk, focused tool), not as a default - see `design.md` on avoiding generic dark-glow aesthetics.
 
-Re-theme by editing the `:root` variables (override example below). Tokens live on `:root`, not `#molnifyAppHtml`, so the body-appended widgets (Select2, date/time pickers) can resolve them. Brand teal (`#00acac`) stays literal - other, non-overridden UI uses it, so tokenising it would let elements drift out of sync.
+Re-theme by editing the `:root` variables (override example below). Tokens live on `:root`, not `#molnifyAppHtml`, so the body-appended widgets (Select2, the date picker) can resolve them. Brand teal (`#00acac`) stays literal - other, non-overridden UI uses it, so tokenising it would let elements drift out of sync.
 
 ```css
 :root {
@@ -77,7 +77,7 @@ body, #page-container { background: var(--m-bg); color: var(--m-text); }
 
 /* Tabs (nav-tabs-inverse; the active tab's white background is on the <a>) */
 .nav-tabs-inverse > li > a { color: var(--m-text-muted); background: transparent; border: none; }
-.nav-tabs-inverse > li > a:hover, .nav-tabs-inverse > li > a:focus { background: var(--m-control); color: var(--m-text-strong); }
+.nav-tabs-inverse > li > a:hover, .nav-tabs-inverse > li > a:focus { background: var(--m-control) !important; color: var(--m-text-strong) !important; }
 .nav-tabs-inverse > li.active > a,
 .nav-tabs-inverse > li.active > a:hover,
 .nav-tabs-inverse > li.active > a:focus { background: var(--m-panel) !important; color: var(--m-text-strong) !important; border-color: var(--m-control) !important; }
@@ -128,12 +128,11 @@ body, #page-container { background: var(--m-bg); color: var(--m-text); }
 #molnifyAppHtml .switchery-options + .switchery { background-color: var(--m-control-2) !important; box-shadow: none !important; border-color: var(--m-control-2) !important; }
 #molnifyAppHtml .switchery-options:checked + .switchery { background-color: #00acac !important; box-shadow: none !important; border-color: #00acac !important; }
 
-/* Select2 v4.1 - appended to <body>, can't scope to #molnifyAppHtml. Selected/highlighted use
-   modifier classes (not [aria-selected]), and Molnify's style.css uses !important. */
+/* Select2 4.0.13 - appended to <body>, can't scope to #molnifyAppHtml. Selected options are
+   flagged with [aria-selected=true], and Molnify's style.css uses !important. */
 .select2-dropdown { background-color: var(--m-panel) !important; border-color: var(--m-control) !important; }
 .select2-container--default .select2-results__option { color: var(--m-text); }
-.select2-container--default .select2-results__option--selected { background-color: var(--m-control) !important; color: var(--m-text-strong); }
-.select2-container--default .select2-results__option--highlighted.select2-results__option--selectable,
+.select2-container--default .select2-results__option[aria-selected=true] { background-color: var(--m-control) !important; color: var(--m-text-strong); }
 .select2-container--default .select2-results__option--highlighted[aria-selected] { background-color: var(--m-control-2) !important; color: var(--m-text-strong) !important; }
 .select2-search__field { color: var(--m-text); background: var(--m-bg); }
 .select2-container--default .select2-selection--single { background-color: var(--m-panel) !important; border-color: var(--m-control) !important; }
@@ -141,21 +140,20 @@ body, #page-container { background: var(--m-bg); color: var(--m-text); }
 .select2-container--default .select2-selection--single .select2-selection__arrow b { border-color: var(--m-text-muted) transparent transparent transparent; }
 .select2-container--default .select2-selection--multiple { background-color: var(--m-panel) !important; border-color: var(--m-control) !important; }
 .select2-container--default .select2-selection__choice { background-color: var(--m-control) !important; border-color: var(--m-control-2) !important; color: var(--m-text) !important; }
-.select2-container--default .select2-selection__choice__display { color: var(--m-text) !important; }
 .select2-container--default .select2-selection__choice__remove { color: var(--m-text-muted) !important; }
 
 /* Date picker (bootstrap-datepicker, appended to body) */
-.datepicker, .datepicker.dropdown-menu { background: var(--m-panel); border-color: var(--m-control); color: var(--m-text); }
+.datepicker, .datepicker.dropdown-menu { background: var(--m-panel); border-color: var(--m-control) !important; color: var(--m-text); }
 .datepicker table tr td, .datepicker table tr th { color: var(--m-text); }
 .datepicker table tr td.day:hover, .datepicker table tr td.focused { background: var(--m-control); }
 .datepicker table tr td.active, .datepicker table tr td.active.active,
 .datepicker table tr td.active:hover { background: var(--m-control-2) !important; color: var(--m-text-strong); }
 .datepicker table tr td.old, .datepicker table tr td.new { color: var(--m-text-faint); }
 
-/* Time picker (bootstrap-timepicker, appended to body) */
+/* Time picker (bootstrap-timepicker, rendered inside #inputpanel) */
 .bootstrap-timepicker-widget.dropdown-menu { background: var(--m-panel); border-color: var(--m-control); color: var(--m-text); }
 .bootstrap-timepicker-widget table td input { background: var(--m-bg); border: 1px solid var(--m-control); color: var(--m-text); }
-.bootstrap-timepicker-widget a { color: var(--m-text-muted); }
+.bootstrap-timepicker-widget table td a { color: var(--m-text-muted); }
 
 /* NVD3 charts - scope text fill to axis + legend only; a blanket `.nvd3 text` would also
    recolor pie/donut slice labels and break their adaptive per-slice contrast. */

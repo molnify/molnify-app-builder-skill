@@ -12,14 +12,14 @@ Before touching anything, understand the workbook. Run the **inspect script** to
 molnify_inspect_excel.py <file.xlsx>
 ```
 
-This outputs all cell values, formulas, colors, conditional formatting, charts, named ranges, data validations, and a formula dependency analysis that identifies potential inputs and outputs. Use its output to guide the steps below.
+By default this prints an overview: sheets, sizes, Molnify cell counts, counts of formulas, conditional formats and data validations, and each chart's type and title. Other modes go deeper: `--dependencies` gives a formula dependency analysis that identifies potential inputs and outputs, `--charts` gives each chart's series ranges and axis titles, and `--formulas`, `--range`, `--search`, `--deps` and `--molnify` show formulas, cell values and named ranges (see `--help`). Use its output to guide the steps below.
 
 1. **Identify the purpose** - What does the spreadsheet calculate? What are users expected to change vs. just read?
 2. **Trace formula dependencies** to classify cells (the inspect script does this automatically):
-   - Cells that **no other cell depends on** (leaf values the user types into) → likely **Inputs**
+   - **Constants that formulas depend on** (values the user types into) → likely **Inputs**
    - Cells that **depend on other cells but nothing depends on them** (end results) → likely **Outputs**
    - Everything in between → **intermediate calculations** (stay uncolored in the model, invisible to the user)
-3. **Note any charts or summary tables** in the original file - these will need to be recreated using Molnify's own charting. The inspect script lists all native Excel charts with their type, data ranges, and axis labels.
+3. **Note any charts or summary tables** in the original file - these will need to be recreated using Molnify's own charting. The inspect script's `--charts` mode lists native Excel charts with their type, data ranges, and axis titles.
 4. **Mark original model sheets with `molnifyIgnore`** - Place the text `molnifyIgnore` in cell A1 of each original model sheet. This tells Molnify to skip color interpretation on that sheet entirely, which prevents conditional formatting or any incidental cell colors from being misread as inputs/outputs/charts. If A1 already contains data, insert a new row at the top first so existing content shifts down (and update any formulas that reference cells on that sheet accordingly).
 5. **Check formulas for compatibility** - Modern Excel (365/2021) saves newer functions with internal `_xlfn.` or `_xludf.` prefixes (e.g., `_xlfn.IFS`, `_xlfn.XLOOKUP`). openpyxl preserves these prefixes in formula strings, and Molnify's calculation engine cannot parse them. You must address these before uploading:
    - **Strip the prefix** for supported functions: `IFS`, `SWITCH`, `TEXTJOIN`, `CONCAT`, `MAXIFS`, `MINIFS`, `AVERAGEIFS`, `CEILING.MATH`, `FLOOR.MATH`, `IFNA`, `NUMBERVALUE`, `DAYS`. Simply remove the `_xlfn.` part (e.g., `_xlfn.IFS(...)` → `IFS(...)`).
@@ -41,8 +41,8 @@ Create a new sheet (e.g. named `Metadata`) as the **first sheet** in the workboo
 Both cells in each row must be purple. `ParseAllSheets: TRUE` is required since you will have multiple sheets.
 
 Other useful metadata to consider:
-- `Description` - appears in the app header
-- `EnabledForSave: TRUE` - lets users save scenarios
+- `Headless` - enable custom frontend
+- `JavaScript` - build and/or change the UI
 - `CSS` - custom styling
 
 See the **Metadata Reference** section for all options. Only include metadata that differs from defaults.
@@ -132,7 +132,7 @@ The script reports two severity levels:
 The validator detects cell fills that are close to - but not exactly - a standard Molnify color. These appear as warnings like:
 
 ```
-WARNING: Sheet1!B5: fill color #00B060 is close to a Molnify color but may not be recognized.
+WARNING: Sheet1!B5: fill color #00B060 is close to a Molnify color but may not be recognized. Use exact standard colors.
 ```
 
 This usually means the cell was colored manually or in Google Sheets with a slightly different shade. The fix is to apply the exact standard color (e.g. `#00B050` for inputs).

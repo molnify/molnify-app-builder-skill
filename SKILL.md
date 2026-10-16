@@ -3,7 +3,7 @@ name: molnify-app-builder
 description: "Build, convert, validate, and style Molnify apps: spreadsheet-driven web applications where Excel or Google Sheets formulas drive the logic and colored cells define inputs, outputs, charts, and actions. Use when creating a Molnify app from scratch, converting an existing spreadsheet into one, validating or styling an app, or answering questions about how Molnify apps work."
 license: Apache-2.0
 metadata:
-  version: 1.1.8
+  version: 1.1.9
 ---
 
 # Molnify App Development Guide
@@ -67,7 +67,7 @@ Most common patterns at a glance:
 
 2. **Only include metadata that differs from defaults** - Do not add metadata cells for values that match the default. This keeps your spreadsheet clean and easier to maintain. For example, don't include `AutoCalcEnabled: TRUE` since TRUE is already the default.
 
-3. **Metadata must be on the first sheet** - All purple metadata cells must be placed on the first sheet of your workbook. Metadata on other sheets will be ignored.
+3. **Put metadata on the first sheet** - The first sheet of your workbook must hold the purple metadata cells. Metadata on other sheets is also applied when `ParseAllSheets` is TRUE.
 
 4. **Set `ParseAllSheets: TRUE` for multi-sheet apps** - By default, Molnify only parses the first sheet. If your app has inputs, outputs, actions, charts or metadata on multiple sheets, you must set the metadata `ParseAllSheets` to `TRUE`. AppBuilder always adds this automatically.
 
@@ -77,7 +77,7 @@ Most common patterns at a glance:
 
 7. **Display numbers at a sensible scale and precision** - Raw formula results are rarely display-ready: they carry excessive decimals (`33.333333333`) *and* often an awkward magnitude. Two separate decisions:
    - **Precision:** Round to what the reader can act on. ~3-4 significant figures is plenty for most displays. Use Excel's `ROUND()` in the formula, or the `decimals=N` UI option (and `axisDecimals=N` for chart axes - long axis tick labels are a common readability killer).
-   - **Magnitude:** If values run in the thousands or millions, scale the unit instead of printing every digit. `124 500 SEK` reads better as `124.5 tSEK`, and `8 300 000 SEK` as `8.3 MSEK`. Divide by 1000/1e6 in the formula (or use the `multiplier` UI option) and state the scaled unit in the title - e.g. title "Revenue (tSEK)" rather than a 7-digit axis. Keep the chosen unit consistent across related outputs and a chart's whole axis.
+   - **Magnitude:** If values run in the thousands or millions, scale the unit instead of printing every digit. `124 500 SEK` reads better as `124.5 tSEK`, and `8 300 000 SEK` as `8.3 MSEK`. Divide by 1000/1e6 in the formula and state the scaled unit in the title - e.g. title "Revenue (tSEK)" rather than a 7-digit axis. Keep the chosen unit consistent across related outputs and a chart's whole axis.
    - **Rule of thumb:** before finalizing, ask "at this scale, is this number easy to read at a glance?" An axis labelled `0, 25000, 50000, 75000` should usually be `0, 25, 50, 75` with a "tSEK" axis title. This applies to scalar outputs, table cells, and chart axes alike.
 
 8. **Verify formulas after adding or removing cells** - When inserting or deleting rows/columns, Excel formulas may shift or break. Always verify that all formulas still reference the correct cells after structural changes. This is especially critical when working programmatically (e.g., with openpyxl) where automatic reference adjustment doesn't occur.
@@ -99,7 +99,7 @@ Most common patterns at a glance:
 14. **Range arithmetic is not evaluated as an array** - Molnify's engine does not do implicit array evaluation. In an ordinary formula cell, an argument that computes over a whole range - `(range>2)*1`, `--(range<>"")`, `rangeA&rangeB`, `IF(range="","",range)` - collapses to a single value by implicit intersection with the formula's own row or column. When there is no overlap the formula errors; when there is one it returns a plausible-looking wrong answer instead. The familiar Excel idioms built on this therefore do not work:
     ```
     ❌ =SUMPRODUCT((A2:A50>2)*B2:B50)     ✓ =SUMIF(A2:A50,">2",B2:B50)
-    ❌ =SUMPRODUCT(--(A2:A50<>""))        ✓ =COUNTA(A2:A50)-COUNTIF(A2:A50,"")
+    ❌ =SUMPRODUCT(--(A2:A50<>""))        ✓ =ROWS(A2:A50)-COUNTBLANK(A2:A50)
     ❌ =SUM(IF(A2:A50="Bob",B2:B50))      ✓ =SUMIFS(B2:B50,A2:A50,"Bob")
     ```
     Reach for `SUMIF`/`SUMIFS`, `COUNTIF`/`COUNTIFS`, `AVERAGEIFS`, or a helper column that computes the per-row value so a plain `SUM` can total it. `SUMPRODUCT` is supported, but only with plain range references as arguments: `SUMPRODUCT(A2:A50,B2:B50)` is fine. Array formulas that a spreadsheet application genuinely entered as such (Ctrl+Shift+Enter) are evaluated correctly, but `molnify_builder.py` does not write them, so they are not an option when building an app in code.
@@ -164,7 +164,7 @@ If you can't tell which it is, ask - it's one question and it decides the whole 
 | UI Type | Description | Example |
 |---------|-------------|---------|
 | `slider` | Single-handle slider | `UI: slider;min=0;max=100` |
-| `range` | Dual-handle range slider | `UI: range;min=0;max=100` |
+| `range` | Dual-handle range slider (needs `slider` too) | `UI: slider;range;min=0;max=100` |
 | `delta=N` | Increment step between slider ticks | `UI: slider;min=0;max=100;delta=10` |
 | `gridNum=N` | Number of ticks on slider grid | `UI: slider;min=0;max=100;gridNum=5` |
 
@@ -172,8 +172,8 @@ If you can't tell which it is, ask - it's one question and it decides the whole 
 | UI Type | Description | Example |
 |---------|-------------|---------|
 | `dropdown` | Dropdown from data validation list | `UI: dropdown` |
-| `select` | Same as dropdown | `UI: select` |
-| `multiple` | Multi-select dropdown | `UI: multiple` |
+| `select` | Button group, one button per data validation option | `UI: select` |
+| `multiple` | Multi-select dropdown (needs `dropdown` too) | `UI: dropdown;multiple` |
 | `recorddropdown` | Dropdown populated from the app's record table | `UI: recorddropdown;display=customerName` |
 | `rowdropdown` | Dropdown populated from any database table | `UI: rowdropdown;tableName=data_my-app_0;display=name;map=name->custName` |
 
@@ -190,7 +190,7 @@ To create a dropdown: create a named range with the list values, add Data Valida
 #### Special Inputs
 | UI Type | Description | Example |
 |---------|-------------|---------|
-| `fileupload` | File upload | `UI: fileupload;maxFiles=3;acceptedFileTypes=.pdf,.jpg` |
+| `fileupload` | File upload | `UI: fileupload;maxFiles=3;acceptedFileTypes=application/pdf,image/jpeg` |
 | `signature` | Signature capture | `UI: signature` |
 | `barcode` | Barcode/QR scanner | `UI: barcode` |
 | `infotext` | Read-only info display (can contain HTML) | `UI: infotext` |
@@ -204,19 +204,19 @@ To create a dropdown: create a named range with the list values, add Data Valida
 | `min=N` | Minimum allowed value, enforced when typing pauses (can snap a half-typed number) | `UI: min=0` |
 | `max=N` | Maximum allowed value | `UI: max=100` |
 | `delta=N` | Increment step for +/- buttons and slider ticks | `UI: delta=0.5` |
-| `multiplier=N` | Display multiplier, also applied to `min`/`max`/`delta` | `UI: multiplier=100` (shows 0.5 as 50) |
+| `multiplier=N` | Display multiplier, also applied to `min`/`max`/`delta` (inputs only) | `UI: multiplier=100` (shows 0.5 as 50) |
 | `prefix=X` | Display prefix (inputs only) | `UI: prefix=$` |
 | `postfix=X` | Display suffix (inputs only) | `UI: postfix=%` |
-| `decimals=N` | Number of decimal places | `UI: decimals=2` |
+| `decimals=N` | Number of decimal places (outputs only) | `UI: decimals=2` |
 | `placeholder=X` | Placeholder text | `UI: placeholder=Enter value...` |
-| `regEx=X` | Regex pattern for validation | `UI: regEx=^[A-Z]{2}[0-9]{4}$` |
+| `regEx=X` | Regex of characters to strip as the user types | `UI: regEx=[^a-zA-Z]` (letters only) |
 
 ### Layout & Display Options
 | Option | Description | Example |
 |--------|-------------|---------|
 | `hidden` | Hide the input | `UI: hidden` |
 | `noTitle` | Hide the label | `UI: noTitle` |
-| `class=X` | Custom CSS class - applied to `.panel-body`, not the outer `.panel`. For inputs, Molnify appends `-form-group-class` (e.g., `class=half-left` → `.half-left-form-group-class`) | `UI: class=my-custom-class` |
+| `class=X` | Custom CSS class on the input element; its form group gets the class with `-form-group-class` appended (e.g., `class=half-left` → `.half-left-form-group-class`) | `UI: class=my-custom-class` |
 | `dividerName=X` | Add section divider above | `UI: dividerName=Personal Details` |
 | `tab=X` | Start a new tab - all following inputs are placed in this tab until the next `tab=`. Only set on the **first** input of each tab, not on every input. Inputs before the first `tab=` are shown on every tab. | `UI: tab=Advanced` |
 
@@ -239,8 +239,8 @@ Automatically populate inputs with data from the user's session. These are set i
 | `user.email` | Logged-in user's email | Preferred over `user` |
 | `user` | User's email (or identification number if available) | Legacy alias - use `user.email` for clarity |
 | `user.ip` | User's IP address | |
-| `superuser` | `"true"` or `"false"` | String, not boolean - compare with `="true"` in formulas |
-| `manager` | `"true"` or `"false"` | String, not boolean - compare with `="true"` in formulas |
+| `superuser` | `TRUE` or `FALSE` | Boolean, not string |
+| `manager` | `TRUE` or `FALSE` | Boolean, not string |
 | `currentRealm` | Current realm name | Only meaningful when `Realms` metadata is set |
 | `tag1` through `tag10` | Custom per-user data fields | **Requires `DBUsers: TRUE`** - these fields are managed via the sidebar user interface |
 
@@ -272,7 +272,7 @@ Same as inputs: `cell`, `name`, `value`, `UI`, `details`
 | `leftColumn` | Force into left column (works on html, charts, tables, peopleMatrix) | `UI: leftColumn` |
 | `rightColumn` | Force into right column (works on html, charts, tables, peopleMatrix). Without this, panels alternate between columns. **Required when using CSS Grid on `#boxRow`** - the default alternation logic doesn't apply in Grid layouts. | `UI: rightColumn` |
 | `panelHidden` | Panel collapsed by default | `UI: panelHidden` |
-| `dividerName=X` | Section divider above output (requires amongInputs) | `UI: dividerName=Revenue and profit` |
+| `dividerName=X` | Section divider above output (output boxes, or html outputs with amongInputs) | `UI: dividerName=Revenue and profit` |
 | `peopleMatrix` | People/team matrix visualization | `UI: peopleMatrix;columns=5;rows=3` |
 
 **`amongInputs` and tabs:** Molnify assigns items to tabs based on physical row order in the spreadsheet. An `amongInputs` output with `tab=X` will only join an existing tab created by inputs if it appears **between those input rows** in the spreadsheet. If the output is placed after all inputs (e.g., because AppBuilder writes inputs first, then outputs), `tab=X` creates a **new, separate tab** instead of joining the existing one. To place an `amongInputs` output inside an input tab, it must be physically interleaved among the inputs in the spreadsheet. Use `app.add_output(..., among_inputs=True)` in AppBuilder to achieve this.
@@ -295,6 +295,7 @@ Charts and tables use **blue cells** for data values only.
 | 2   | Q1             | [BLUE]100  | [BLUE]150  | [BLUE]80   |            |  <- A2 no color, B2:D2 BLUE
 | 3   | Q2             | [BLUE]120  | [BLUE]140  | [BLUE]95   |            |  <- A3 no color, B3:D3 BLUE
 | 4   | Q3             | [BLUE]110  | [BLUE]160  | [BLUE]100  |            |  <- A4 no color, B4:D4 BLUE
+| 5   | Q4             | [BLUE]130  | [BLUE]170  | [BLUE]90   |            |  <- A5 no color, B5:D5 BLUE
 ```
 
 **Key rules:**
@@ -315,7 +316,7 @@ Charts and tables use **blue cells** for data values only.
 | `donutChart` | Donut chart (single column) | `UI: donutChart` |
 | `waterfallChart` | Waterfall chart | `UI: waterfallChart` |
 | `scatterChart` | Scatter plot | `UI: scatterChart` |
-| `geoChart` | Geographic map | `UI: geoChart;map=world_mill` |
+| `geoChart` | Geographic map | `UI: geoChart;map=world_mill_en` |
 | `lineBarChart` | Combined line/bar (first series = bars, rest = lines) | `UI: lineBarChart` |
 | `table` | Data table | `UI: table` |
 
@@ -327,7 +328,7 @@ Charts and tables use **blue cells** for data values only.
 | `showValues` | Show values on top of bars | `UI: barChart;showValues` |
 | `xAxis=X` | X-axis title | `UI: lineChart;xAxis=Time` |
 | `yAxis=X` | Y-axis title | `UI: lineChart;yAxis=Value` |
-| `yAxisTicks=N` | Number of Y-axis ticks | `UI: lineChart;yAxisTicks=5` |
+| `yAxisTicks=N` | Number of Y-axis ticks (bar and scatter charts) | `UI: barChart;yAxisTicks=5` |
 | `decimals=N` | Decimals for values displayed on chart | `UI: barChart;decimals=2` |
 | `axisDecimals=N` | Decimals on axis labels | `UI: axisDecimals=1` |
 | `noGridLines` | Hide grid lines | `UI: lineChart;noGridLines` |
@@ -336,12 +337,12 @@ Charts and tables use **blue cells** for data values only.
 | `atLeastSync` | Sync Y-axis range for dual Y-axes (lineBarChart) | `UI: lineBarChart;atLeastSync` |
 | `centerZero` | Center zero on Y-axis (negative values mirror positive) | `UI: barChart;centerZero` |
 | `hideMaxMin` | Hide max/min labels on Y-axis | `UI: lineChart;hideMaxMin` |
-| `staggerLabels` | Stagger X-axis labels (auto-enabled if >3 values) | `UI: barChart;staggerLabels` |
+| `staggerLabels=X` | `true` or `false` to force staggered X-axis labels on or off (auto-enabled if >3 values) | `UI: barChart;staggerLabels=false` |
 | `noWordWrap` | Disable label word wrap (horizontal bars only) | `UI: barChart;horizontal;noWordWrap` |
 | `noControls` | Hide legend and stacked/grouped toggle | `UI: barChart;noControls` |
 | `noGroupedStackedControls` | Hide only stacked/grouped toggle | `UI: barChart;noGroupedStackedControls` |
-| `map=X` | Map name for geoChart | `UI: geoChart;map=world_mill` |
-| `class=X` | Custom CSS class - applied to `.panel-body`, not the outer `.panel`. Use `$('.my-class').closest('.panel')` in JS to target the outer panel. | `UI: barChart;class=revenue-chart` |
+| `map=X` | Map name for geoChart | `UI: geoChart;map=world_mill_en` |
+| `class=X` | Custom CSS class - applied to `.panel-body`, not the outer `.panel` (on a scalar output box: to `.outputBoxValue`). Use `$('.my-class').closest('.panel')` in JS to target the outer panel. | `UI: barChart;class=revenue-chart` |
 
 **Scatter chart specific:**
 - Column headers must use these reserved names: `x`, `y`, and optionally `series`, `size`, `shape`
@@ -406,12 +407,12 @@ These properties control what happens in the UI after an action completes succes
 | `successSilent` | TRUE to hide modal immediately with no message |
 | `successJavaScript` | JavaScript code to execute after the action succeeds (runs via `eval`) |
 
-If none of these are set, a default success message is shown and the modal stays open until the user closes it.
+If none of these are set, the modal closes when the action completes, unless the action type supplies its own success message (such as "Email sent!").
 
 **Using `successHTMLElementId`:** This property injects HTML into an existing DOM element after the action succeeds. The target element must already exist in the page. To create a target element, add an `infotext` input with the desired `id` as an HTML attribute:
 ```
 # Create target element using an infotext input
-app.add_input("", '<div id="actionResult"></div>', ui="infotext;noTitle;hidden")
+app.add_input("", '<div id="actionResult"></div>', ui="infotext;noTitle")
 
 # Reference it in the action
 app.add_action({
@@ -539,8 +540,6 @@ Insert or update a record in the application's configured record table.
 
 Requires `RecordTableName` metadata (or `recordTableName` action option) to be set to the full table name including the `data_` prefix (e.g., `data_my-app_0`). Maps input/output variables to database columns. If the ID variable has a value, updates that record; otherwise creates a new record. The new/updated record ID is automatically set on the input matching `idVariable`.
 
-**Important:** Only modified ("dirty") inputs are sent. Columns for unmodified inputs need `DEFAULT` values or must be nullable. See `database.md` for details.
-
 **Insert SQL Row (`type: insertrow`)**
 Insert or update a row in a specific database table with explicit column mapping.
 | Property | Description | Default |
@@ -552,8 +551,6 @@ Insert or update a row in a specific database table with explicit column mapping
 | `saveIp` | TRUE to save user IP address | "true" |
 
 Uses INSERT ... ON DUPLICATE KEY UPDATE for upsert behavior. Automatically adds `_molnify_user_email`, `_molnify_application_id`, `_molnify_user_ip` columns.
-
-**Important:** Only modified ("dirty") inputs are sent. Columns for unmodified inputs need `DEFAULT` values or must be nullable. See `database.md` for details.
 
 #### Download Query Action (`type: downloadquery`)
 Download SQL query results as a file.
@@ -600,8 +597,6 @@ Execute several actions in sequence with a single button click.
 Number sub-actions starting from 1. Each references another action by its `name` property. Sub-actions run in numeric order and **execution stops immediately if any sub-action fails** - later sub-actions do not run.
 
 Success handling properties (`successText`, `successUrl`, etc.) set on the multiple action take precedence over those from sub-actions.
-
-**Do not wrap `aiprompt` or `http` actions inside `multiple` if you need their response.** The `multiple` wrapper consumes the `responsevalue` field - the AI or HTTP response becomes inaccessible. Use `skip` formulas on the action directly for conditional execution, and chain follow-up work via `successJavaScript` instead.
 
 Example - define a `scenariosave` action named `saveStep` and an `email` action named `emailStep`, both with `hidden: TRUE`. Then create the visible button:
 ```
@@ -788,7 +783,7 @@ Metadata cells (purple) configure application-wide settings.
 | `JavaScript` | Page load (early) | Custom JS code, runs before app is fully interactive |
 | `additionalJavaScript` | Page load (early) | JavaScript appended after the main `JavaScript` value. Use when JS exceeds a single cell's 32,767-character limit - split across `JavaScript` and `additionalJavaScript`. **Repeatable:** an app can have as many `additionalJavaScript` rows as it needs; each is appended in the order the rows appear, so place them after the `JavaScript` row. |
 | `JavaScriptAfterLoad` | Page load (late) | JS to run after app fully loads and initial calculation completes |
-| `JavaScriptAfterCalc` | Every calculation | JS to run after each calculation (including initial load) |
+| `JavaScriptAfterCalc` | Every calculation | JS to run after each calculation the browser requests (not the initial load) |
 
 #### Available JavaScript Functions
 | Function | Description |
@@ -893,4 +888,4 @@ Use `var=variableName` to store validation dropdown options in a JavaScript vari
 
 ---
 
-*This is v1.1.8 of the skill, published 2026-10-06. Installed copies are version-pinned; to update to the latest release, re-run `npx skills add https://app.molnify.com` (see `README.md`).*
+*This is v1.1.9 of the skill, published 2026-10-16. Installed copies are version-pinned; to update to the latest release, re-run `npx skills add https://app.molnify.com` (see `README.md`).*

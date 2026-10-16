@@ -5,7 +5,7 @@ Companion to the main reference.
 ## Constraints
 
 - Molnify uses Bootstrap 3 with a fixed DOM structure - you override, not replace
-- Fonts come from Google Fonts (loaded via `HeaderFont`/`BodyFont` metadata)
+- `HeaderFont`/`BodyFont` metadata only set `font-family`; load the font yourself with an `@import` from Google Fonts at the top of the `CSS` metadata
 - CSS is injected via the `CSS` metadata cell, followed by any number of `additionalCSS` cells, no separate files
 - Layout restructuring requires `JavaScriptAfterLoad` for DOM manipulation
 - The default 50/50 two-column split is a starting point, not a constraint - if a user asks for a "modern", "dashboard", or "professional" design, assume layout changes are needed
@@ -19,19 +19,19 @@ body                                          <- Page background; your `body { b
 └── #page-container.page-header-fixed         <- padding-top:54px clears the fixed top banner
     └── #molnifyAppWrapper > … > #molnifyAppBody   <- metadata color rules are scoped to #molnifyAppBody
         ├── #header.navbar.navbar-fixed-top   <- Top banner (TopBannerColor paints its .container-fluid)
-        └── #content                          <- Main content container (theme: .content { padding:20px })
+        └── #custom-ajax-content > #content   <- Main content container (theme: .content { padding:20px 25px })
             ├── #appHeaderRow                 <- App title bar - NOT the same element as #header above
             │   ├── .appHeaderLeft            <- App title (h1#appHeader)
             │   └── #appMenu                  <- Scenario selector, action buttons
             │       └── .appHeaderGroup       <- Button groups (save, print, reset, etc.)
             │
             └── #boxRow                       <- Main content row
-                ├── #leftColumn               <- Input panel (col-md-6 or col-md-4 if InputPanelSmall)
+                ├── #leftColumn               <- Input panel, plus output panels alternated here (col-md-6 or col-md-4 if InputPanelSmall)
                 │   └── #inputpanel.panel     <- Panel container
                 │       ├── .panel-heading    <- "Inputs" title + collapse buttons
-                │       │   └── .nav-tabs     <- Tab navigation (if tabs defined)
+                │       │   └── .tab-overflow > .nav-tabs <- Tab navigation (if tabs defined)
                 │       └── .panel-body
-                │           └── .tab-content  <- Tab containers
+                │           └── form > .tab-content <- Tab containers
                 │               └── .tab-pane <- Individual tab
                 │                   └── .form-group <- Each input
                 │                       ├── label.control-label  <- Input title
@@ -152,20 +152,20 @@ Common reasons custom CSS silently fails:
 
 - **`#content`** ships a default `padding: 20px 25px` - zero it when building a custom grid so it doesn't compound with the grid's own padding.
 - **Icons are Font Awesome 4.7.0.** FA5/6 names do not render - use the FA4 name: `fa-line-chart` (not `fa-chart-line`), `fa-coffee` (not `fa-mug-hot`), `fa-cubes` (not `fa-box`), `fa-money` (not `fa-coins`). When an icon silently doesn't appear, check it against the FA4 set.
-- **Dropdowns render as Select2 4.0.13**, not a plain `<select>`. The native `<select>` is hidden (`.select2-hidden-accessible`), so styling `.form-control`/`.inputElement` does nothing. Style the widget instead: `.select2-selection--single` (the visible box), `.select2-selection__rendered` (the selected text), `.select2-selection__arrow` (the caret). The **results list is appended to `<body>`**, not inside `#inputpanel`, so `.select2-dropdown` / `.select2-results__option` rules **cannot be scoped** to the app - write them unscoped. Selected options are flagged with the **`[aria-selected]` attribute** (Select2 4.0), not a `--selected` class; Molnify's bundled Select2 CSS loads **after** custom CSS and ties on specificity, so raise specificity (e.g. append `[aria-selected]`) to win.
+- **Dropdowns render as Select2 4.0.13**, not a plain `<select>`. The native `<select>` is hidden (`.select2-hidden-accessible`), so styling `.form-control`/`.inputElement` does nothing. Style the widget instead: `.select2-selection--single` (the visible box), `.select2-selection__rendered` (the selected text), `.select2-selection__arrow` (the caret). The **results list is appended to `<body>`**, not inside `#inputpanel`, so `.select2-dropdown` / `.select2-results__option` rules **cannot be scoped** to the app - write them unscoped. Selected options are flagged with the **`[aria-selected=true]` attribute** (Select2 4.0), not a `--selected` class; Molnify's bundled Select2 CSS uses more specific selectors (`.select2-container--default .select2-results__option[aria-selected=true]`), and `style.css` sets the highlighted background with `!important`, so match that specificity (prefix `.select2-container--default`, append `[aria-selected]`) and add `!important` for the highlighted state.
 - **Custom header layout:** `#appHeaderRow` is a Bootstrap `.row`, and both `h1#appHeader` and the nested `p#pAppTitle` carry bottom margins - which top-aligns the title in a custom layout. The info/print/save buttons are `.btn-success` (teal). To restyle: make `#appHeaderRow` a flex container, zero the margins on `#appHeader`/`#pAppTitle`, suppress the `.row` clearfix pseudo-elements (`#appHeaderRow::before/::after { content: none; }`), and restyle the buttons.
 - When custom CSS seems to have no effect, **inspect the real rendered DOM in the browser console** - Molnify's DOM diverges from the spreadsheet and wraps inputs in third-party widgets (Select2), so the element you're targeting may be hidden or replaced.
 
 ## Targeting Specific Panels
 
-**Panel IDs are unreliable.** `#outputpanel-N` and `#chartpanel-N` IDs are assigned dynamically and their numbering can change when you add/remove outputs. Use the `class=` UI option instead:
+**Panel IDs are unreliable.** `#outputpanelN` IDs (e.g. `#outputpanel0`) are assigned dynamically and their numbering can change when you add/remove outputs. Use the `class=` UI option instead:
 
 ```javascript
 // Reliable - uses your custom class (UI: barChart;class=revenue-chart)
 var panel = $('.revenue-chart').closest('.panel');
 
 // Fragile - breaks when panels are reordered
-var panel = $('#outputpanel-2');
+var panel = $('#outputpanel2');
 ```
 
 ## Default Color Scheme
@@ -174,9 +174,9 @@ Understanding the defaults helps avoid contrast issues. The app uses Bootstrap's
 
 | Element | Default Background | Default Text |
 |---------|-------------------|--------------|
-| Top banner | `#242a30` (dark gray) | White |
+| Top banner | `#fff` (white) | - (logo only) |
 | Panel headers | `#242a30` (dark gray) | White |
-| Panel body | `#fff` (white) | `#333` (dark) |
+| Panel body | `#fff` (white) | `#707478` (gray) |
 | Output boxes (.bg-green) | `#00acac` (teal) | White |
 | Success buttons (.btn-success) | `#00acac` (teal) | White |
 | Default buttons (.btn-default) | `#b6c2c9` (gray-blue) | White |
@@ -264,8 +264,7 @@ Chart series colors are controlled by `.chart-series0` through `.chart-series39`
 **Clean modern look:**
 ```css
 body { background: #f5f6fa; }
-.panel { border: none; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-.panel-heading { border-radius: 12px 12px 0 0; }
+.panel { border: none; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden; }
 .form-control { border-radius: 6px; }
 .btn { border-radius: 6px; }
 ```
@@ -282,18 +281,19 @@ body { background: #f5f6fa; }
 ```css
 #appHeaderRow { display: none; }           /* Hide entire header */
 .panel-heading-btn { display: none; }      /* Hide collapse buttons */
-#scenario-chooser { display: none; }       /* Hide scenario dropdown */
+#scenario-chooser + .select2 { display: none; } /* Hide scenario dropdown */
 .btn.buttonMargin { display: none; }       /* Hide copy buttons */
 ```
 
-**Caution:** `display:none` on output elements (`.outputBoxValue`, `.out-table`, `.out-html`, `.chart`) prevents Molnify from populating their values. To reposition outputs, use DOM moves (`.appendTo()`, `.insertBefore()`) rather than hiding and showing. If you need a value without displaying it, use `position: absolute; left: -9999px` or a hidden output with `getValueForVariable()`.
+**Caution:** outputs hidden with `display:none` still get their values, but a chart hidden that way is drawn squashed. Hide charts with `visibility:hidden` instead, or call `window.dispatchEvent(new Event('resize'))` in the same function that shows them.
 
 **Custom fonts (with metadata):**
 ```
 HeaderFont: Playfair Display
-BodyFont: Source Sans 3
+BodyFont: "Source Sans 3"
+CSS: @import url('https://fonts.googleapis.com/css2?family=Playfair+Display&family=Source+Sans+3&display=swap');
 ```
-These load from Google Fonts automatically.
+The metadata only sets `font-family`, so the `@import` (first line of `CSS`) is what loads the fonts. Quote a name containing a word that starts with a digit, or the declaration is invalid and dropped.
 
 ## Included CSS & JavaScript Libraries
 
@@ -310,7 +310,7 @@ Molnify apps automatically include these libraries - you can use their classes a
 | Library | Used For |
 |---------|----------|
 | ionRangeSlider | Slider inputs |
-| bootstrap-select | Enhanced dropdowns |
+| Select2 4.0.13 | Dropdown inputs |
 | bootstrap-datepicker | Date picker inputs |
 | bootstrap-timepicker | Time picker inputs |
 | Switchery | Toggle switches |
@@ -328,7 +328,6 @@ Molnify apps automatically include these libraries - you can use their classes a
 |---------|------------------|
 | jQuery | DOM manipulation, AJAX, event handling |
 | Bootstrap JS | Modal, dropdown, tab, collapse components |
-| Parsley.js | Form validation |
 
 **Using these in custom CSS/JavaScript:**
 ```css
@@ -377,7 +376,10 @@ fullWidth.insertBefore('#leftColumn');
 
 **Hide the input panel entirely:**
 ```javascript
-JavaScriptAfterLoad: $('#leftColumn').hide(); $('#rightColumn').removeClass('col-md-6').addClass('col-md-12');
+JavaScriptAfterLoad:
+$('#leftColumn .panel').not('#inputpanel').appendTo('#rightColumn');
+$('#leftColumn').hide();
+$('#rightColumn').removeClass('col-md-6 col-md-8').addClass('col-md-12');
 ```
 
 See the "HTML DOM Structure" section above for all selectors.
@@ -441,7 +443,7 @@ Once you've applied this pattern, `grid-template-columns` controls everything. S
 | Narrow sidebar + wide content | `minmax(360px, 33%) 1fr` |
 | Equal split | `1fr 1fr` |
 | Three columns | `minmax(360px, 30%) 1fr 300px` |
-| Inputs hidden, full-width content | `0 1fr` (plus `#leftColumn { display: none; }`) |
+| Inputs hidden, full-width content | `1fr` (plus `#leftColumn { display: none; }`) |
 | Stacked (mobile-style) | `1fr` (single column) |
 
 ### Overriding Bootstrap inside panels

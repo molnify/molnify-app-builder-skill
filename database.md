@@ -28,7 +28,7 @@ Database tables can be created and managed declaratively via purple metadata cel
   },
   "indexes": {
     "idx_email": "email",
-    "idx_compound": "col1,col2"
+    "idx_compound": "name,amount"
   },
   "access": ["other-app-id"]
 }
@@ -52,7 +52,7 @@ Valid column types (these are MySQL types - do NOT use generic names like "STRIN
 | Boolean | `BOOL` (alias for TINYINT) |
 | Date/Time | `DATETIME`, `TIMESTAMP` (require default), `DATE`, `TIME`, `YEAR` |
 | Binary | `BLOB`, `TINYBLOB`, `MEDIUMBLOB`, `VARBINARY`, `BINARY` |
-| Other | `JSON`, `SET`, `ENUM` |
+| Other | `JSON` |
 
 Blocked types: `LONGTEXT`, `LONGBLOB`, and any type starting with `LONG`.
 
@@ -78,21 +78,6 @@ This creates table `data_<appId>_0` with the four columns plus system columns.
 ## Writing Data
 
 Use `insertrow` or `addrecord` actions to write to database tables. See the Actions Reference for full details.
-
-### Unmodified inputs are not sent
-
-Molnify's frontend only sends inputs the user has actually changed ("dirty" inputs) to the backend. If a user submits a form without modifying an input, that column is **not included** in the INSERT statement. This means:
-
-- Database columns that correspond to inputs with default values **must** have a `DEFAULT` in the schema, or be `nullable`
-- Otherwise the INSERT fails (NOT NULL violation) or the column silently stores NULL
-- This applies to both `addrecord` and `insertrow` actions
-
-**Example:** An input defaults to `"Food"` but the user never touches it - the backend never receives `"Food"`, so the `category` column must have `DEFAULT 'Food'` or allow NULL.
-
-When using `DataTable.N`, set defaults explicitly:
-```json
-{"columns": {"category": {"type": "VARCHAR", "default": "Food"}}}
-```
 
 ### Table name convention
 
@@ -137,7 +122,7 @@ The populated named range can be used in:
 **Dynamic queries with formulas:**
 The metadata value can be an Excel formula that builds the SQL dynamically:
 ```
-autofill.items: ="SELECT name, price FROM data_my-app_items WHERE category = '" & B5 & "'"
+autofill.items: ="SELECT name, price FROM `data_my-app_items` WHERE category = '" & B5 & "'"
 ```
 
 **Constraints:**

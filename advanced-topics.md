@@ -27,10 +27,7 @@ Create custom buttons using either HTML outputs or `infotext` inputs:
 - Apply custom button styling
 
 ### Dynamic Dropdown Lists
-Create dependent dropdowns (e.g., category -> subcategory):
-1. Create named ranges for each category's options
-2. Use INDIRECT formula to select the correct range based on first dropdown
-3. Apply data validation using the INDIRECT formula
+Create dependent dropdowns (e.g., category -> subcategory) with a named range whose cells are formulas that pick the current category's options, and use that range as the second dropdown's list. INDIRECT in a data validation does not follow the first dropdown.
 
 ### Custom Save Scenario Buttons
 Instead of using the built-in save button:
@@ -111,24 +108,23 @@ Understanding when Molnify replaces output DOM is critical for any app that uses
 When a calculation runs (via auto-calc, `calculateButton()`, or action with `successCalculate: TRUE`):
 
 1. The backend evaluates all formulas and returns changed values
-2. **Tables** (`<table>` elements): The `<thead>` and `<tbody>` innerHTML are **fully replaced** with fresh HTML generated from the new data. All child elements (rows, cells) are new DOM nodes. Any attributes, event handlers, or injected elements you added to table cells are gone.
+2. **Tables** (`<table>` elements): **May** be rebuilt on any calculation - there is no guarantee either way. A rebuild replaces the `<thead>` and `<tbody>` innerHTML, so attributes, event handlers, or injected elements you added to table cells are gone.
 3. **Output boxes** (text/number outputs): Updated **in-place** - only the `innerHTML` of the individual output element changes, and only if the value actually changed. The parent elements remain.
 4. **Charts**: Data is updated and the chart is redrawn via NVD3.
 5. `JavaScriptAfterCalc` runs after all updates are applied.
 
-The critical implication for tables: **any DOM modifications you made to `<thead>` or `<tbody>` will be lost on the next calculation** - added columns, event handlers, CSS classes, `contenteditable` attributes, injected buttons - all gone.
+The critical implication for tables: **any DOM modifications you made to `<thead>` or `<tbody>` may be lost on any calculation** - added columns, event handlers, CSS classes, `contenteditable` attributes, injected buttons.
 
 ### The idempotency rule
 
-Any function that runs in `JavaScriptAfterCalc` and modifies table DOM must be **idempotent** - it must produce the correct result on a freshly rebuilt table.
-
-Since tables are fully rebuilt on each calculation, you don't need cleanup - you're always working with a fresh table. But if you also modify non-table output DOM, that content persists between calculations, so you must handle both cases:
+Any function that runs in `JavaScriptAfterCalc` and modifies output DOM must be **idempotent** - the table may or may not have been rebuilt, so check before adding:
 
 ```javascript
 JavaScriptAfterCalc:
-// Tables: no cleanup needed - thead/tbody are already fresh
 $('.out-table tbody tr').each(function() {
-  $(this).append('<td class="js-actions-col"><button class="btn btn-xs btn-info">View</button></td>');
+  if (!$(this).find('.js-actions-col').length) {
+    $(this).append('<td class="js-actions-col"><button class="btn btn-xs btn-info">View</button></td>');
+  }
 });
 
 // Non-table outputs: clean up first since the element persists
@@ -138,7 +134,7 @@ $('#my-output').append('<span class="js-badge">New</span>');
 
 ### When NOT to enhance table DOM
 
-If your app needs interactive tables (inline editing, row-level action buttons, drag-to-reorder), you are creating **client-side state inside server-owned DOM**. Every calculation cycle will rebuild the table and destroy your state. This leads to cascading bugs: lost edit state, broken event handlers, and missing injected elements.
+If your app needs interactive tables (inline editing, row-level action buttons, drag-to-reorder), you are creating **client-side state inside server-owned DOM**. Any calculation may rebuild the table and destroy your state. This leads to cascading bugs: lost edit state, broken event handlers, and missing injected elements.
 
 Instead, use one of these approaches:
 
@@ -146,7 +142,7 @@ Instead, use one of these approaches:
 |------|---------------------|-----|
 | View records, click to edit in a form | Master-Detail pattern | `patterns.md` |
 | Full inline editing, custom table interactions | Custom frontend (own the entire DOM) | `custom-frontend.md` |
-| Simple read-only table with click handlers | `JavaScriptAfterCalc` (safe - table is fresh each time) | Example above |
+| Simple read-only table with click handlers | `JavaScriptAfterCalc`, attached idempotently | Example above |
 
 See the "Choosing a Pattern" section in `patterns.md` for a full decision tree.
 
@@ -178,7 +174,7 @@ Molnify has several JavaScript entry points, each with different timing and inje
 
 | Entry point | When it runs | How it's injected |
 |-------------|--------------|-------------------|
-| `JavaScript` (metadata) | Page load, early - before DOM is fully interactive | `<script>` tag in page |
+| `JavaScript` (metadata) | Page load, early - app elements exist, but input widgets such as Select2 are not set up yet | `<script>` tag in page |
 | `JavaScriptAfterLoad` (metadata) | Page load, late - after DOM init, input setup, and scenario dropdown init | Inline in `$(document).ready()` |
 | `JavaScriptAfterCalc` (metadata) | After every calculation - inside `afterCalc()`, after all output values are updated | Embedded in `afterCalc()` function body |
 | `jsOnChange` (UI option) | After the specific input/output value changes | If a global function with that name exists, called via `window[name].apply()`. Otherwise, `eval()`. |
@@ -190,7 +186,7 @@ Molnify has several JavaScript entry points, each with different timing and inje
 
 - The error is logged to the browser console
 - Execution of that specific script stops
-- The app continues working - UI updates happen *before* JS runs, so the app state is already consistent
+- An error in `JavaScriptAfterCalc` stops later input changes from calculating, so guard code that can throw
 - Other entry points are unaffected (e.g., a broken `jsOnChange` on one input won't prevent `JavaScriptAfterCalc` from running)
 
 ### Inline `<script>` in HTML outputs
@@ -230,7 +226,7 @@ JavaScript: function handleAgeChange(el) { var v = getValueForVariable('age'); i
 
 | Problem | Cause | Fix |
 |---------|-------|-----|
-| DOM manipulation does nothing | Using `JavaScript` metadata (runs before DOM is ready) | Move to `JavaScriptAfterLoad` |
+| Select2 dropdown elements not found | `JavaScript` metadata runs before input widgets such as Select2 are set up | Move to `JavaScriptAfterLoad` |
 | Empty string check fails | Empty Molnify cells return `'\u00A0'` (non-breaking space), not `''` | Check `if (val !== '\u00A0')` |
 | `getValueForVariable()` returns `undefined` | No input/output has `variable=X` matching that name | Verify `UI: variable=X` is set, check spelling/case |
 | `performActionWithName()` silently fails | No action has `name: X` (case-sensitive) | Verify the action's `name` property matches exactly |

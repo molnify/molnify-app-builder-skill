@@ -33,8 +33,6 @@ A database-backed app where users submit expenses that are stored in a table, wi
 - `JavaScriptAfterLoad: calculateButton();` runs a calculation on page load so the autofill table populates immediately - autofill only runs during a calculation, and auto-calc does not fire on initial load on its own.
 - The autofill SQL uses backtick-quoted table name (`` `data_expense-tracker_0` ``) because hyphens in SQL are interpreted as subtraction without quoting.
 - `expense_date` uses `VARCHAR(20)` rather than `DATE` because date inputs are stored as formatted text strings.
-- `category` and `amount` have `default` values matching their input defaults. Molnify only sends inputs the user has modified ("dirty") - if a user submits without changing an input, that column is omitted from the INSERT. Without a DB default, the column would be NULL.
-
 ### App sheet (sheet 2)
 
 ```

@@ -9,6 +9,7 @@ Modes (default --overview):
   --formulas              Distinct formulas, with filled-down/right copies collapsed
   --deps CELL             What one cell references and what references it
   --dependencies          Workbook-wide input/output/intermediate analysis
+  --charts                Native Excel charts with their series ranges and axis titles
 
 Every mode stops printing at MAX_OUTPUT_CHARS and reports what it left out.
 """
@@ -269,6 +270,92 @@ def block_text(sheet, block):
 
 
 # ---------------------------------------------------------------------------
+# Native Excel charts
+# ---------------------------------------------------------------------------
+
+def _chart_text(text):
+    """Plain text of a chart title or label: its cell reference, or the runs of its rich text."""
+    if text is None:
+        return None
+    if text.strRef is not None and text.strRef.f:
+        return '=' + text.strRef.f
+    if text.rich is None:
+        return None
+    lines = [''.join(r.t or '' for r in p.r or []) + ''.join(f.t or '' for f in p.fld or [])
+             for p in text.rich.p]
+    return '\n'.join(lines) or None
+
+
+def _title_text(title):
+    return _chart_text(title.tx) if title is not None else None
+
+
+def _title_label(title):
+    text = _title_text(title)
+    return short(text, 80) if text else '(no title)'
+
+
+def _chart_kind(chart):
+    """Plot types of a chart; a combination chart has several."""
+    kinds = []
+    for plot in chart._charts:
+        details = [getattr(plot, 'barDir', None), getattr(plot, 'grouping', None)]
+        details = [d for d in details if d and d != 'standard']
+        kinds.append(plot.tagname + (f" ({', '.join(details)})" if details else ''))
+    return ' + '.join(kinds)
+
+
+def _anchor_cell(chart):
+    anchor = chart.anchor
+    if isinstance(anchor, str):
+        return anchor
+    start = getattr(anchor, '_from', None)
+    return f"{get_column_letter(start.col + 1)}{start.row + 1}" if start is not None else None
+
+
+def _data_source(source):
+    """Reference formula of a chart data source, or its literal values."""
+    if source is None:
+        return None
+    for attr in ('numRef', 'strRef', 'multiLvlStrRef'):
+        ref = getattr(source, attr, None)
+        if ref is not None and ref.f:
+            return ref.f
+    for attr in ('numLit', 'strLit'):
+        lit = getattr(source, attr, None)
+        if lit is not None:
+            return f"literal {[p.v for p in lit.pt]}"
+    return None
+
+
+def _series_name(series):
+    label = series.tx
+    if label is None:
+        return None
+    if label.strRef is not None and label.strRef.f:
+        return '=' + label.strRef.f
+    return label.v
+
+
+def _chart_lines(chart, number):
+    where = _anchor_cell(chart)
+    yield f"Chart {number}{' at ' + where if where else ''}: {_chart_kind(chart)} {_title_label(chart.title)}"
+    for plot in chart._charts:
+        axes = [(name, getattr(plot, attr, None)) for name, attr in (('x', 'x_axis'), ('y', 'y_axis'))]
+        axes = [f"{name}={_title_label(axis.title)}" for name, axis in axes if axis is not None]
+        if axes:
+            yield f"  {plot.tagname} axes: {', '.join(axes)}"
+        for i, series in enumerate(plot.series, 1):
+            parts = [f"name={short(_series_name(series), 80)}"]
+            for attr, label in (('cat', 'categories'), ('xVal', 'x'), ('val', 'values'),
+                                ('yVal', 'y'), ('bubbleSize', 'sizes')):
+                ref = _data_source(getattr(series, attr, None))
+                if ref:
+                    parts.append(f"{label}={ref}")
+            yield f"  Series {i}: {', '.join(parts)}"
+
+
+# ---------------------------------------------------------------------------
 # Modes
 # ---------------------------------------------------------------------------
 
@@ -282,6 +369,8 @@ def mode_overview(wb, path, out):
     fn_counts = Counter()
     for ws in wb.chartsheets:
         out.line(f"== {ws.title} (chart sheet, {ws.sheet_state})")
+        for chart in ws._charts:
+            out.line(f"  Chart: {_chart_kind(chart)} {_title_label(chart.title)}")
     for ws in wb.worksheets:
         cells = formulas = arrays = 0
         roles = Counter()
@@ -321,14 +410,14 @@ def mode_overview(wb, path, out):
         cf = sum(len(r.rules) for r in ws.conditional_formatting)
         if cf:
             features.append(f"{cf} conditional formats")
-        if ws._charts:
-            features.append(f"{len(ws._charts)} charts")
         hidden_rows = sum(1 for d in ws.row_dimensions.values() if d.hidden)
         hidden_cols = sum(1 for d in ws.column_dimensions.values() if d.hidden)
         if hidden_rows or hidden_cols:
             features.append(f"hidden: {hidden_rows} rows, {hidden_cols} column groups")
         if features:
             out.line("  " + ', '.join(features))
+        for chart in ws._charts:
+            out.line(f"  Chart: {_chart_kind(chart)} {_title_label(chart.title)}")
         for table in ws.tables.values():
             out.line(f"  Excel table {table.displayName} ({table.ref})")
     out.line()
@@ -686,6 +775,20 @@ def mode_dependencies(wb, sheet_filter, out):
     out.finish("Use --sheet to narrow, or --deps for a single cell.")
 
 
+def mode_charts(wb, sheet_filter, out):
+    count = 0
+    for name in wb.sheetnames:
+        ws = wb[name]
+        if (sheet_filter and name != sheet_filter) or not ws._charts:
+            continue
+        out.line(f"== {name}")
+        for chart in ws._charts:
+            count += 1
+            for line in _chart_lines(chart, count):
+                out.line(line)
+    out.finish("Use --sheet to narrow.", f"{count} charts")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description='Inspect an Excel file to plan its conversion into, or changes to, a Molnify app.')
@@ -698,7 +801,9 @@ def main():
     modes.add_argument('--formulas', action='store_true', help='Distinct formulas, fill copies collapsed')
     modes.add_argument('--deps', metavar='CELL', help="References to and from one cell, e.g. 'Sheet1!B5'")
     modes.add_argument('--dependencies', action='store_true', help='Workbook-wide dependency analysis')
-    parser.add_argument('--sheet', help='Limit --molnify, --search, --formulas or --dependencies to one sheet')
+    modes.add_argument('--charts', action='store_true', help='Native Excel charts: series ranges, axis titles')
+    parser.add_argument('--sheet', help='Limit --molnify, --search, --formulas, --dependencies or --charts '
+                                        'to one sheet')
     parser.add_argument('--offset', type=int, default=0, help='Character offset for a single-cell --range')
     args = parser.parse_args()
 
@@ -720,6 +825,8 @@ def main():
             mode_deps(wb, args.deps, out)
         elif args.dependencies:
             mode_dependencies(wb, args.sheet, out)
+        elif args.charts:
+            mode_charts(wb, args.sheet, out)
         else:
             mode_overview(wb, args.file, out)
     except ValueError as e:

@@ -73,7 +73,7 @@ Also available in standard (non-headless) apps.
 
 | Method | Description |
 |--------|-------------|
-| `MolnifySDK.calculate(changes)` | Debounced (120ms), queued. Returns `Promise` resolving to response data. |
+| `MolnifySDK.calculate(changes)` | Debounced (120ms), queued. Returns `Promise` resolving to response data. A call followed by another within 120ms is dropped: its changes are never sent and its promise never settles.
 | `MolnifySDK.execute(nameOrIndex, changes)` | Execute an action by name (string) or index (number). Optional `changes` array. |
 | `MolnifySDK.getVariable(name)` | Look up input/output by variable name. Returns `{cell, value, name, ui}` or `undefined`. |
 | `MolnifySDK.getCellForVariable(name)` | Shorthand returning just the cell reference string. |
@@ -94,7 +94,7 @@ For apps with `recorddropdown` or `rowdropdown` inputs, the SDK provides methods
 - `changes` - `[{variable, value}, ...]` for `@variable` filter resolution (optional)
 
 ```javascript
-MolnifySDK.searchDropdown('App!B3', 'Swe').then(function(items) {
+MolnifySDK.searchDropdown('App!B3', 'Sw').then(function(items) {
   // items = [{id: "42", text: "Sweden"}, {id: "17", text: "Swiss"}]
   items.forEach(function(item) { console.log(item.id, item.text); });
 });
@@ -106,7 +106,7 @@ MolnifySDK.searchDropdown('App!B3', 'Swe').then(function(items) {
 - `changes` - `[{variable, value}, ...]` for `@variable` filter resolution (optional)
 
 Returns `{row, idColumn, map}` where:
-- `row` - `{columnName: value}` for all columns in the selected row
+- `row` - `{columnName: value}` for the ID column plus the columns named in `map` (rowdropdown with `map`) or, otherwise, the columns whose names match an input variable
 - `idColumn` - the ID column name (e.g., `"recordId"` or custom `idVariable`)
 - `map` - explicit column-to-variable mapping string if configured (e.g., `"name->custName,email->custEmail"`), or absent for auto-mapping
 
@@ -123,15 +123,21 @@ MolnifySDK.getDropdownRowData('App!B3', '42').then(function(data) {
 **`uploadFile(file)`** - Upload a file to Molnify storage.
 - `file` - a `File` object (from `<input type="file">` or drag-and-drop)
 
-Returns `{url, urlFull}` where `url` is the storage URL and `urlFull` is the full-size URL (for images, includes the `__full_` variant).
+Returns `{url, urlFull}`, both the URL of the full-size file (for images the file name includes `__full_`).
+
+The server keeps no input values between requests, so a value sent with `calculate()` is not there when an action runs. Pass the URL in the `changes` of every `calculate()` and `execute()` that needs it. For a `generatereport` template to list the file, the cell must be an input with `UI: fileupload`; several files go in one value, comma-separated.
 
 ```javascript
+var uploadCell = MolnifySDK.getCellForVariable('attachment');  // input with UI: fileupload;variable=attachment
+var uploaded = [];
 var input = document.querySelector('input[type="file"]');
 input.addEventListener('change', function() {
   MolnifySDK.uploadFile(input.files[0]).then(function(result) {
-    // Set the file URL as the cell value for a fileupload input
-    return MolnifySDK.calculate([{cell: 'App!B5', value: result.url}]);
+    uploaded.push(result.url);
   });
+});
+document.querySelector('#make-report').addEventListener('click', function() {
+  MolnifySDK.execute('report', [{cell: uploadCell, value: uploaded.join(',')}]);
 });
 ```
 
@@ -159,17 +165,13 @@ Send changed input values, receive calculated output values.
 **Response:**
 ```json
 {
-  "applicationID": "my-app",
   "requestID": "1709715600000",
-  "dateModified": "1709715500000",
   "changes": [
-    { "cell": "App!B4", "value": "84", "name": "Result" },
-    { "cell": "App!B5", "value": "<div>html content</div>" }
+    { "cell": "App!B4", "value": "84" },
+    { "cell": "App!B5", "value": "<div>html content</div>" },
+    { "cell": "App!B8:C9", "name": "Sales,2024,2025,Q1,Q2,", "value": "120.0000,140.0000,95.0000,110.0000," }
   ],
-  "charts": [
-    { "cell": "App!B7", "valueObject": { "...": "chart data" } }
-  ],
-  "errors": {}
+  "errors": { "App!B6": "#VALUE!" }
 }
 ```
 
@@ -232,7 +234,6 @@ Search a database dropdown for matching rows.
 **Response:**
 ```json
 {
-  "status": "ok",
   "items": [
     { "id": "42", "text": "Acme Corp (Sweden)" },
     { "id": "17", "text": "Beta Inc (Sweden)" }
@@ -242,7 +243,7 @@ Search a database dropdown for matching rows.
 
 **Key details:**
 - `changes` uses `variable`/`value` keys (not `cell`/`value` like calculate) - these resolve `@variable` placeholders in the dropdown's `filter` option
-- `q` is the search term - matched against the `display` column via SQL `LIKE`
+- `q` is the search term - matched against the `display` expression and the ID column via SQL `LIKE`
 - Returns up to `maxRows` results (default 1000)
 
 ### POST `/api/dropdown_row_data`
@@ -261,7 +262,7 @@ Fetch full row data for a selected dropdown row.
 **Response:**
 ```json
 {
-  "status": "ok",
+  "status": "success",
   "row": { "name": "Acme Corp", "country": "Sweden", "email": "info@acme.com" },
   "idColumn": "recordId",
   "map": "name->custName,country->custCountry"
@@ -390,13 +391,13 @@ recalc();
 ## Things to Watch Out For
 
 **Response `changes` may not include `variable`.**
-The calculate response returns `{cell, value, name}` - the `variable` field may or may not be present. Build a lookup map from `MolnifySDK.getAllVariables()` to translate cell references back to variable names.
+The calculate response returns `{cell, value}` for each output (charts also carry `name`), with no `variable` field. Build a lookup map from `MolnifySDK.getAllVariables()` to translate cell references back to variable names.
 
 **Output values arrive pre-formatted with the cell's number format.**
 The backend runs each output through Excel's number format when building the response, so an output cell formatted as `$#,##0` returns the string `"$901,185"`, not `901185.35` - and `+value` / `parseFloat` yield `NaN`. Keep output cells on the General format and do all number formatting in JavaScript.
 
 **Charts require special handling.**
-Chart data comes back in `data.charts[].valueObject`, not in `data.changes`. Parse the valueObject and render with a JS charting library (Chart.js, D3, etc.).
+Charts and tables come back in `data.changes` like outputs, but their `cell` is the data range (`"App!B8:C9"`), `name` joins the title, series names and labels with commas (`"Sales,2024,2025,Q1,Q2,"`), and `value` joins the data with commas, numbers to four decimals (`"120.0000,140.0000,95.0000,110.0000,"`). Both strings end with a comma. Split them and render with a JS charting library (Chart.js, D3, etc.).
 
 **Actions need all current values.**
 When executing an action, send ALL current input values in `changes` - not just the dirty ones. Action property formulas (like `to: =B5` for email recipient) need the full input state to evaluate correctly. This differs from calculate, where you only send changed values.
@@ -425,9 +426,6 @@ MolnifySDK.execute('analyzeData').then(function(resp) {
   // Use result...
 });
 ```
-
-**Do not wrap `aiprompt` or `http` inside a `multiple` action if you need the response.**
-The `multiple` wrapper consumes the `responsevalue` field, making it inaccessible to the caller - execute the action directly instead (see the Actions Reference for `skip`/`successJavaScript`).
 
 **Dropdown options are not accessible via MolnifySDK.**
 `MolnifySDK.getVariable()` and `MolnifySDK.getAllVariables()` return `{cell, name, value, variable, ui}` but NOT the options list for dropdowns. In headless mode, to populate dropdown UIs you must either inline the options in your JavaScript bundle, or create a hidden output that reads the options from a named range and expose it via `variable=`.

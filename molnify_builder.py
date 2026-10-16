@@ -78,6 +78,12 @@ def _check_cell_length(value, address=''):
             f"Split the content across multiple cells.")
 
 
+def _model_sheet_a1_message(sheet):
+    return (f"Cannot write to {sheet}!A1: add_model_sheet puts 'molnifyIgnore' in A1 so the sheet "
+            f"is excluded from color interpretation, and row 1 is not available for content such as "
+            f"a header row. Start content at row 2.")
+
+
 def _has_section_break(ui):
     """Check if a UI string starts a new tab or divider section."""
     if not ui:
@@ -456,10 +462,10 @@ class AppBuilder:
         sheet = m.group(1) or m.group(2) or 'App'
         col_str = m.group(3)
         row_num = int(m.group(4))
-        if sheet in self._model_sheets and col_str.upper() == 'A' and row_num == 1:
-            raise ValueError(
-                f"Cannot write to {sheet}!A1: model sheets keep 'molnifyIgnore' in A1 "
-                f"so the sheet is excluded from color interpretation. Start content at row 2.")
+        if sheet in self._model_sheets and col_str == 'A' and row_num == 1:
+            if value == 'molnifyIgnore':
+                return
+            raise ValueError(_model_sheet_a1_message(sheet))
         self._extra_cells.append((sheet, col_str, row_num, value))
 
     def save(self, filepath):
@@ -471,6 +477,11 @@ class AppBuilder:
         Args:
             filepath: Output file path (.xlsx).
         """
+        for sheet, col_str, row_num, value in self._extra_cells:
+            if (sheet in self._model_sheets and col_str == 'A' and row_num == 1
+                    and value != 'molnifyIgnore'):
+                raise ValueError(_model_sheet_a1_message(sheet))
+
         wb = Workbook()
 
         # --- Metadata sheet ---
@@ -553,7 +564,6 @@ class AppBuilder:
         # --- Data validations (dropdown options) ---
         if self._data_validations:
             from openpyxl.worksheet.datavalidation import DataValidation
-            # Create a hidden sheet for option lists
             opts_sheet_name = '_Options'
             opts_ws = wb.create_sheet(opts_sheet_name)
             opts_ws.cell(row=1, column=1, value='molnifyIgnore')

@@ -84,8 +84,8 @@ app.add_metadata("CSS",
     ".chart-container{min-height:400px}")
 
 # Inputs
-app.add_input("View", "All", ui="dropdown;variable=viewMode")
-app.add_input("Year", "2025", ui="dropdown")
+app.add_input("View", "All", ui="dropdown;variable=viewMode", options=["All", "Regional", "Summary"])
+app.add_input("Year", "2025", ui="dropdown", options=["2023", "2024", "2025"])
 
 # Summary outputs - units baked into the formula; prefix/postfix are input-only and do nothing here.
 app.add_output("Total Revenue", '="$"&TEXT(ROUND(Model!B2,0),"#,##0")', ui="icon=fa-usd")
@@ -110,12 +110,13 @@ app.add_chart("Monthly Trend", "lineChart",
                              "=Model!G5", "=Model!G6", "=Model!G7"],
               },
               labels=["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
-              ui_extra="yAxis=Revenue ($)")
+              ui_extra="yAxis=Revenue ($);showIfVariable=viewMode;showIfValue=All")
 
 # Product mix pie chart
 app.add_chart("Product Mix", "pieChart",
               series={"Share": ["=Model!H2", "=Model!H3", "=Model!H4"]},
-              labels=["Enterprise", "SMB", "Consumer"])
+              labels=["Enterprise", "SMB", "Consumer"],
+              ui_extra="showIfVariable=viewMode;showIfValue=All")
 
 # Model sheet with sample data
 app.add_model_sheet("Model")
