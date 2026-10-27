@@ -3,7 +3,7 @@ name: molnify-app-builder
 description: "Build, convert, validate, and style Molnify apps: spreadsheet-driven web applications where Excel or Google Sheets formulas drive the logic and colored cells define inputs, outputs, charts, and actions. Use when creating a Molnify app from scratch, converting an existing spreadsheet into one, validating or styling an app, or answering questions about how Molnify apps work."
 license: Apache-2.0
 metadata:
-  version: 1.1.9
+  version: 1.1.10
 ---
 
 # Molnify App Development Guide
@@ -617,7 +617,7 @@ Send a prompt to an AI model and store the response in a variable.
 | `model` | Model identifier - see the model table below | (required) |
 | `prompt` | The prompt text to send to the AI model | (required) |
 | `maxResponseTokens` | Maximum model tokens in the response | 1024 |
-| `maxThinkingTokens` | Model token budget for reasoning (must be > 0 for `gemini-pro`) | 0 |
+| `maxThinkingTokens` | Model token budget for reasoning | 0 |
 | `responseSchema` | JSON schema to enforce structured response format | - |
 | `responseVariable` | Variable name to store the AI response in | "aipromptresponse" |
 
@@ -642,11 +642,13 @@ or writing quality. Between them they cover most app prompts. The models differ 
 what they cost per call, so reach for a larger one only once a smaller one has actually fallen
 short on the real prompt.
 
-**Reasoning:** `gemini-pro` requires `maxThinkingTokens` > 0 and fails without it. The `-instant`
-variants (`glm-instant`, `kimi-instant`) are the same underlying models with reasoning forced off,
-so `maxThinkingTokens` has no effect on them. On every other model a value > 0 enables reasoning.
+**Reasoning:** `gemini-pro`, `claude-sonnet` and `claude-opus` cannot turn reasoning off, so at 0
+they reason as little as they can. The `-instant` variants (`glm-instant`, `kimi-instant`) are the
+same underlying models with reasoning forced off, so `maxThinkingTokens` has no effect on them. On
+every other model a value > 0 enables reasoning.
 
-How the number is read depends on the provider: Gemini spends exactly the budget you set, while the
+How the number is read depends on the provider: Gemini spends the budget you set, kept within the
+model's range (at most 24 576 on `gemini-flash`, 128 to 32 768 on `gemini-pro`), while the
 Claude, GLM, and Kimi models only look at whether it is above zero and then decide for themselves
 how much to reason. So on those, `maxThinkingTokens: 1` and `maxThinkingTokens: 5000` do the same
 thing. Thinking tokens count towards `maxResponseTokens`, so raise it alongside.
@@ -888,4 +890,4 @@ Use `var=variableName` to store validation dropdown options in a JavaScript vari
 
 ---
 
-*This is v1.1.9 of the skill, published 2026-10-16. Installed copies are version-pinned; to update to the latest release, re-run `npx skills add https://app.molnify.com` (see `README.md`).*
+*This is v1.1.10 of the skill, published 2026-10-27. Installed copies are version-pinned; to update to the latest release, re-run `npx skills add https://app.molnify.com` (see `README.md`).*
