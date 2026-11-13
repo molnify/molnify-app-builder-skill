@@ -32,7 +32,7 @@ The backend doesn't care what the frontend looks like. It receives cell values, 
 - **`JavaScript` metadata** - your custom code, runs after the SDK loads
 - **`CSS` metadata** - injected as `<style>` in `<head>`
 - **`HeadHTML` metadata** - raw HTML in `<head>` for external libraries
-- **Google Fonts** - auto-loaded if `HeaderFont` or `BodyFont` is set
+- **Fonts** - the families named in `HeaderFont` and `BodyFont` are loaded from Molnify's own domain, with every weight and style. Any Google Fonts family works; load others with `@import url('/fonts/<Family>.css');` at the top of `CSS`, with `+` for spaces
 - **Google Tag Manager** - included with same consent logic as standard mode
 
 ## What You Don't Get
@@ -373,7 +373,7 @@ recalc();
 | `CSS` | Injected as `<style>` in `<head>` |
 | `additionalCSS` | Appended after `CSS`, repeatable (see tip below) |
 | `HeadHTML` | Raw HTML in `<head>` (CDN scripts, stylesheets) |
-| `HeaderFont` / `BodyFont` | Google Fonts auto-loaded |
+| `HeaderFont` / `BodyFont` | Font families loaded from Molnify's own domain (any Google Fonts family) |
 | `FaviconURL` | Custom favicon |
 | `AppleTouchIconURL` | Custom Apple touch icon |
 | `OnlyAppNameInPageTitle` | Controls page `<title>` format |

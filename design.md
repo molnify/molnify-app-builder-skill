@@ -60,7 +60,7 @@ After styling, ask: "If someone said AI made this, would they immediately believ
 
 ## Typography
 
-Molnify provides `HeaderFont` and `BodyFont` metadata, which set `font-family`; load the fonts from Google Fonts with an `@import` at the top of the `CSS` metadata (see `styling.md`). These two choices set the typographic personality of the entire app.
+Molnify provides `HeaderFont` and `BodyFont` metadata, which set `font-family`; load the fonts with an `@import` of `/fonts/<Family>.css` at the top of the `CSS` metadata (see `styling.md`). Any Google Fonts family works, served from Molnify's own domain. These two choices set the typographic personality of the entire app.
 
 ### Choosing Fonts
 

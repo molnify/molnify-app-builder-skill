@@ -3,7 +3,7 @@ name: molnify-app-builder
 description: "Build, convert, validate, and style Molnify apps: spreadsheet-driven web applications where Excel or Google Sheets formulas drive the logic and colored cells define inputs, outputs, charts, and actions. Use when creating a Molnify app from scratch, converting an existing spreadsheet into one, validating or styling an app, or answering questions about how Molnify apps work."
 license: Apache-2.0
 metadata:
-  version: 1.1.10
+  version: 1.1.12
 ---
 
 # Molnify App Development Guide
@@ -43,6 +43,8 @@ The spreadsheet is how an app is *authored*, not a ceiling on what it can be. Ac
 2. **Value cell** (yellow) - The property value
 
 Each action is a contiguous block of these pairs, separated from other actions by a blank row.
+
+**Cell size:** a cell holds at most 32,767 characters, and the limit applies to everything that goes into one: input values, formula results, outputs, metadata and action properties. A formula whose result would be longer returns `#VALUE!`. Split longer content across several cells.
 
 ### Quick Start
 
@@ -232,7 +234,7 @@ Show/hide inputs and outputs based on variable values:
 To use conditional display, first expose the controlling input or output as a variable with `variable=X`, then reference it in dependent inputs.
 
 ### User Context Variables
-Automatically populate inputs with data from the user's session. These are set in the input's **UI cell** and are populated once when the app loads (before the first calculation). Not related to database autofill (`autofill.*` metadata).
+Automatically populate inputs with data from the user's session. These are set in the input's **UI cell**. The server fills them in from the signed-in session on every calculation and every action, in headless apps as well as the standard UI. Any value the browser sends for them is discarded, as is any value it sends for a cell that isn't an input, so formulas, autofill queries and action properties can rely on them to identify the user.
 
 | Variable | Value | Notes |
 |----------|-------|-------|
@@ -890,4 +892,4 @@ Use `var=variableName` to store validation dropdown options in a JavaScript vari
 
 ---
 
-*This is v1.1.10 of the skill, published 2026-10-27. Installed copies are version-pinned; to update to the latest release, re-run `npx skills add https://app.molnify.com` (see `README.md`).*
+*This is v1.1.12 of the skill, published 2026-11-13. Installed copies are version-pinned; to update to the latest release, re-run `npx skills add https://app.molnify.com` (see `README.md`).*

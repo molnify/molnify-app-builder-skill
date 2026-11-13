@@ -5,7 +5,7 @@ Companion to the main reference.
 ## Constraints
 
 - Molnify uses Bootstrap 3 with a fixed DOM structure - you override, not replace
-- `HeaderFont`/`BodyFont` metadata only set `font-family`; load the font yourself with an `@import` from Google Fonts at the top of the `CSS` metadata
+- `HeaderFont`/`BodyFont` metadata only set `font-family`; load the font yourself with an `@import` of `/fonts/<Family>.css` at the top of the `CSS` metadata
 - CSS is injected via the `CSS` metadata cell, followed by any number of `additionalCSS` cells, no separate files
 - Layout restructuring requires `JavaScriptAfterLoad` for DOM manipulation
 - The default 50/50 two-column split is a starting point, not a constraint - if a user asks for a "modern", "dashboard", or "professional" design, assume layout changes are needed
@@ -291,9 +291,10 @@ body { background: #f5f6fa; }
 ```
 HeaderFont: Playfair Display
 BodyFont: "Source Sans 3"
-CSS: @import url('https://fonts.googleapis.com/css2?family=Playfair+Display&family=Source+Sans+3&display=swap');
+CSS: @import url('/fonts/Playfair+Display.css');
+     @import url('/fonts/Source+Sans+3.css');
 ```
-The metadata only sets `font-family`, so the `@import` (first line of `CSS`) is what loads the fonts. Quote a name containing a word that starts with a digit, or the declaration is invalid and dropped.
+The metadata only sets `font-family`, so the `@import`s (first lines of `CSS`) are what load the fonts. Molnify serves any Google Fonts family from its own domain at `/fonts/<Family>.css`, with `+` for spaces and every weight and style the family has. Quote a name containing a word that starts with a digit, or the declaration is invalid and dropped.
 
 ## Included CSS & JavaScript Libraries
 
